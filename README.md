@@ -9,6 +9,8 @@ Then open http://localhost:3000 (Node 18 or newer).
 
 `npm install` has nothing to download right now (no packages are needed) but it is safe to run, and it
 will pull in packages if you add any later. Use `npm run dev` to restart automatically when `server.js` changes.
+Settings live in `.env` (copy `.env.example` to `.env`; it is gitignored). `env.js` loads it on start, so no extra packages are needed. Real environment variables override the file.
+
 Change the port with `PORT=4000 npm start` (macOS/Linux) or `set PORT=4000 && npm start` (Windows cmd).
 
 ## S-2 server

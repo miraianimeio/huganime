@@ -3,6 +3,8 @@
 //   -> { found: true, intro: { start, end } | null, outro: { start, end } | null }      (seconds)
 // Results are cached for 12 hours. Set ANISKIP_API=... to point at a different server (used for tests).
 
+import "./env.js";
+
 const API = (process.env.ANISKIP_API || "https://api.aniskip.com").replace(/\/+$/, "");
 const TTL_MS = 12 * 60 * 60 * 1000;
 const ERROR_TTL_MS = 60 * 1000;   // a failed lookup is retried after a minute

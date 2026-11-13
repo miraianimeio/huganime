@@ -1,12 +1,13 @@
 // HugAnime local server: `npm start` serves the site AND the "is this server available?" check.
-//   site:   http://localhost:3000/            (opens Public/home.html)
+//   site:   http://localhost:3000/            (redirects to /home.html)
 //   S-2:    GET /s2-episode?animeId=21&malId=21&episode=5&title=One+Piece   -> MegaPlay episode id (see anikoto.js)
 //           GET /s2-debug?animeId=...&title=...                            -> why a title did / didn't resolve
 //   skip:   GET /skip-times?malId=21&episode=5                             -> opening / ending times for Auto Skip (see aniskip.js)
 //   check:  GET /server-check?animeId=21&malId=21&episode=5
 //           -> { "availability": { "datsav:sub": true, "datsav:dub": false, ... } }
-// No packages needed (Node 18+). Optional environment variables:
+// No packages needed (Node 18+). Settings are read from ./.env (see .env.example) or the real environment:
 //   PORT=3000   REFERER=https://your-site (some embed hosts want a referrer when we check them)
+import "./env.js";
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
@@ -106,7 +107,11 @@ async function serveFile(pathname, req, res) {
     return res.end("Bad request");
   }
 
-  const file = path.resolve(ROOT, relative);
+  // URLs map like this:  /home.html -> Public/home.html,  /Css/x.css -> Public/Css/x.css,
+  //                      /Assets/x.png -> Assets/x.png   (old /Public/... URLs still work)
+  if (/^Public(\/|$)/.test(relative)) relative = relative.replace(/^Public\/?/, "");
+  const base = /^Assets(\/|$)/.test(relative) ? ROOT : path.join(ROOT, "Public");
+  const file = path.resolve(base, relative);
   const top = path.relative(ROOT, file).split(path.sep)[0];
   // stay inside Public/ or Assets/ (also blocks ../ tricks)
   if (!PUBLIC_DIRS.includes(top) || path.relative(ROOT, file).startsWith("..")) {
@@ -137,7 +142,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/s2-debug") return await s2Episode(url, res, true);
     if (url.pathname === "/skip-times") return await skipTimes(url, res);
     if (url.pathname === "/") {
-      res.writeHead(302, { Location: "/Public/home.html" });
+      res.writeHead(302, { Location: "/home.html" });
       return res.end();
     }
     if (req.method !== "GET" && req.method !== "HEAD") {

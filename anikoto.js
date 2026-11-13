@@ -7,6 +7,7 @@
 //   2. the Anikoto catalog      crawled from /recent-anime in the background, matched by AniList id, MAL id or exact title
 // The Anikoto response format is not published, so the parsing below tries the usual field names.
 // If a title doesn't resolve, open /s2-debug?animeId=...&title=... to see what was found.
+import "./env.js";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";

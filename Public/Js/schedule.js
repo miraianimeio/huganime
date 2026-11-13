@@ -414,7 +414,8 @@
 
     let nowPlaced = !isToday;
     groups.forEach((g, i) => {
-      if (g.at <= now && !state.showAired) return;
+      // only fold aired episodes on today's tab; past days show everything
+      if (isToday && g.at <= now && !state.showAired) return;
       if (!nowPlaced && g.at > now) {
         timelineEl.append(buildNow(now));
         nowPlaced = true;

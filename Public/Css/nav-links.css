@@ -1,0 +1,130 @@
+/* Top-bar shortcuts: Recent, My List, Schedule (calendar), Random (shuffle) and the EN / JP switch.
+   Loaded after navbar.css / home.css / watch.css on every page. Same font as the rest of the site. */
+
+.nav-links {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  margin-left: 18px;
+}
+
+.nav-link {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #c9c9cf;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.nav-link i {
+  color: #a1a1aa;
+  font-size: 1.05rem;
+  transition: color 150ms ease;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  outline: 0;
+}
+
+.nav-link:hover i,
+.nav-link:focus-visible i {
+  color: #fff;
+}
+
+.nav-links .nav-icon-button {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+  color: #a1a1aa;
+  font-size: 1.15rem;
+  text-decoration: none;
+}
+
+.nav-links .nav-icon-button:hover,
+.nav-links .nav-icon-button:focus-visible {
+  color: #fff;
+}
+
+.nav-links .nav-icon-button[aria-current="page"] {
+  color: var(--accent);
+  background: rgb(var(--accent-rgb) / 12%);
+}
+
+.nav-links .random-manga:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.nav-link[aria-current="page"] {
+  color: var(--accent);
+  background: rgb(var(--accent-rgb) / 12%);
+}
+
+.nav-link[aria-current="page"] i { color: var(--accent); }
+
+/* EN / JP switch (same buttons the side menu uses, so both stay in sync) */
+.nav-lang {
+  display: flex;
+  gap: 2px;
+  margin-left: 6px;
+  padding: 3px;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 9px;
+  background: rgb(255 255 255 / 6%);
+}
+
+.nav-lang-option {
+  min-width: 36px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  color: #a1a1aa;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.nav-lang-option:hover,
+.nav-lang-option:focus-visible {
+  color: #fff;
+  outline: 0;
+}
+
+.nav-lang-option[aria-checked="true"] {
+  color: #0b0b0d;
+  background: var(--accent);
+}
+
+/* side-menu copies of Recent / My List / Schedule: only needed on phones, where the top bar has no room */
+.nav-drawer-link--mobile { display: none; }
+
+/* medium screens: icons only for the text links */
+@media (max-width: 1180px) {
+  .nav-link span { display: none; }
+  .nav-link { width: 36px; justify-content: center; padding: 0; }
+  .nav-links { margin-left: 10px; }
+}
+
+/* small screens: top bar keeps only Random; the rest lives in the side menu */
+@media (max-width: 640px) {
+  .nav-links { margin-left: 0; order: 2; }
+  .nav-links > :not(.random-manga) { display: none; }
+  .nav-links .random-manga { display: grid !important; }
+  .nav-drawer-link--mobile { display: flex; }
+}

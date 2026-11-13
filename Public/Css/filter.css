@@ -1,0 +1,591 @@
+/* Browse / search results page: Huganime dark theme.
+   Accent colour comes from navbar.css and follows the Theme switcher in the side menu. */
+:root {
+  --bg: #000000;
+  --panel: #000000;
+  --panel-2: #23232d;
+  --text: #eaeaea;
+  --muted: #8c8c9e;
+  --on-accent: #0b140b;
+  --line: rgb(255 255 255 / 8%);
+  --radius: 6px;
+  color-scheme: dark;
+  font-family: Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:where(a, button, select, input):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.page {
+  width: min(1600px, calc(100% - 32px));
+  margin-inline: auto;
+  padding: 28px 0 64px;
+}
+
+/* ---------- two-column frame: [title | side heading] then [main | sidebar] ---------- */
+.browse {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 0 32px;
+  align-items: end;
+}
+
+.browse_head {
+  scroll-margin-top: 70px;
+}
+
+.browse_title {
+  margin: 0 0 20px;
+  font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+  font-weight: 500;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.side_head {
+  margin-bottom: 20px;
+}
+
+.side_title {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.side_sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.browse_main {
+  min-width: 0;
+  align-self: start;
+}
+
+.browse_side {
+  position: sticky;
+  top: 70px;
+  align-self: start;
+  min-width: 0;
+}
+
+/* ---------- filter form ---------- */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.fld {
+  display: block;
+  min-width: 0;
+}
+
+.fld input,
+.fld select {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--panel);
+  color: var(--text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.fld select {
+  padding-right: 38px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%238c8c9e'%3E%3Cpath d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  text-overflow: ellipsis;
+}
+
+.fld select:not(:has(option:checked[value=""])) {
+  color: var(--text);
+}
+
+.fld select option {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.fld input::placeholder {
+  color: var(--muted);
+}
+
+.fld input:hover,
+.fld select:hover {
+  background-color: var(--panel-2);
+}
+
+.fld input:focus,
+.fld select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.fld input::-webkit-search-cancel-button {
+  filter: invert(0.6);
+}
+
+.filters_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-filter {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  font-weight: 700;
+  transition: filter 0.12s ease, transform 0.12s ease;
+}
+
+.btn-filter svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-filter:hover {
+  filter: brightness(1.1);
+}
+
+.btn-filter:active {
+  transform: translateY(1px);
+}
+
+.btn-filter--small {
+  min-height: 40px;
+  margin-left: 6px;
+}
+
+.btn-reset {
+  min-height: 46px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.btn-reset:hover {
+  color: var(--accent);
+}
+
+/* ---------- count + layout toggle ---------- */
+.results_bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.results_count {
+  margin: 0;
+  color: var(--muted);
+}
+
+.view_toggle {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.view_btn {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.view_btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.view_btn:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+.view_btn[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+/* ---------- grid ---------- */
+.grid {
+  display: grid;
+  gap: 18px 14px;
+}
+
+.grid--cards {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 124px), 1fr));
+  gap: 22px 14px;
+}
+
+.grid--small {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 96px), 1fr));
+  gap: 20px 12px;
+}
+
+.grid--list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
+  gap: 10px;
+}
+
+/* the shared .anime-card (anime-card.css) fills its grid column here instead of using the row's fixed width */
+.grid .anime-card {
+  width: auto;
+  min-width: 0;
+  flex: none;
+}
+
+.top_card.anime-card {
+  width: auto;
+  flex: none;
+}
+
+/* "list" layout: the same card, poster on the left and the title beside it */
+.grid--list .anime-card_link {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 20px;
+  background: var(--panel);
+}
+
+.grid--list .anime-card_poster {
+  border-radius: 14px;
+}
+
+.grid--list .anime-card_title {
+  margin: 0;
+}
+
+.grid--list .badge-top {
+  display: none;
+}
+
+/* skeleton cards reuse home's .anime-card--skeleton look */
+.grid .anime-card--skeleton {
+  pointer-events: none;
+}
+
+.grid_message {
+  margin: 18px 0;
+  color: var(--muted);
+}
+
+.grid_message[hidden] {
+  display: none;
+}
+
+/* ---------- pagination ---------- */
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 32px;
+}
+
+.pager[hidden] {
+  display: none;
+}
+
+.pager_btn {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.pager_btn:hover:not(:disabled) {
+  background: #2d2d39;
+  color: var(--text);
+}
+
+.pager_btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.pager_btn[aria-current="page"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 800;
+}
+
+.pager_gap {
+  min-width: 24px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- sidebar: top rated ---------- */
+.top_list {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 150px);
+  padding-right: 6px;
+  overflow-y: auto;
+  scrollbar-color: rgb(var(--accent-rgb, 78 217 255) / 60%) transparent;
+  scrollbar-width: thin;
+}
+
+.top_list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.top_list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.top_list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(var(--accent-rgb, 78 217 255) / 55%);
+}
+
+.top_list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.top_card {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  min-height: 108px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--panel);
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.top_card:hover {
+  background: var(--panel-2);
+}
+
+.top_img {
+  width: 76px;
+  height: 100%;
+  min-height: 108px;
+  background: var(--panel-2);
+  object-fit: cover;
+}
+
+.top_body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 14px;
+}
+
+.top_name {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.top_card:hover .top_name {
+  color: #fff;
+}
+
+.top_meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.top_meta span + span::before {
+  margin-right: 10px;
+  content: "\2022";
+}
+
+.top_score {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.top_card--skeleton {
+  display: block;
+  background: linear-gradient(100deg, var(--panel) 30%, var(--panel-2) 50%, var(--panel) 70%) 0 0 / 200% 100%;
+  animation: shimmer 1.3s linear infinite;
+}
+
+/* ---------- tablets and phones ---------- */
+@media (max-width: 1200px) {
+  .filters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .browse {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* single column: title, filters + results, then the ranking underneath */
+  .side_head {
+    margin: 36px 0 14px;
+    order: 3;
+  }
+
+  .browse_main {
+    order: 2;
+  }
+
+  .browse_side {
+    position: static;
+    order: 4;
+  }
+
+  .top_list {
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 820px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fld--keyword {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    width: calc(100% - 24px);
+    padding-top: 18px;
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters_actions {
+    grid-column: 1 / -1;
+  }
+
+  .btn-filter {
+    flex: 1;
+  }
+
+  .grid--cards {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 105px), 1fr));
+    gap: 20px 10px;
+  }
+
+  .grid--small {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 90px), 1fr));
+  }
+
+  .grid--list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+/* note shown when AniList stops returning results after 5,000 matches */
+.results_note {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line, rgb(255 255 255 / 8%));
+  border-radius: 8px;
+  background: rgb(255 255 255 / 4%);
+  color: #a1a1aa;
+  font-size: 0.85rem;
+}
+
+.results_note[hidden] {
+  display: none;
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent | HugAnime</title>
+  <meta name="description" content="Pick up where you left off: the anime you watched recently on HugAnime.">
+  <link rel="icon" type="image/png" href="../Assets/Favicon-001.png">
+  <link rel="stylesheet" href="./Css/navbar.css">
+  <link rel="stylesheet" href="./Css/library.css">
+  <link rel="stylesheet" href="./Css/nav-links.css">
+  <link rel="stylesheet" href="./Css/scrollbar.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+</head>
+<body>
+  <header class="site-header" id="page-top">
+      <nav class="nav-container" aria-label="Main navigation">
+        <button class="nav-icon-button menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-menu">
+          <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+        <a href="home.html" class="brand" aria-label="HugAnime home">
+         <span class="logo-hug">HUG</span>
+         <span class="logo-anime">ANIME</span>
+        </a>
+        <div class="nav-search">
+          <i class="fa-solid fa-magnifying-glass search-icon" aria-hidden="true"></i>
+          <input id="manga-search" type="search" placeholder="Search..." autocomplete="off" aria-label="Search anime titles" aria-controls="search-results" aria-expanded="false">
+          <button class="search-clear" type="button">Clear</button>
+          <kbd aria-label="Press Ctrl K to search">K</kbd>
+          <div class="search-panel" id="search-panel">
+            <div class="search-panel-inner" tabindex="-1">
+              <div class="search-tabs" role="tablist" aria-label="Search in">
+                <button class="search-tab is-active" type="button" role="tab" aria-selected="true" data-type="anime">Anime</button>
+                <button class="search-tab" type="button" role="tab" aria-selected="false" data-type="users">User</button>
+              </div>
+              <div id="search-results" class="search-results" role="listbox" aria-label="Search results"></div>
+              <div class="search-hints" aria-hidden="true">
+                <span><kbd class="key">&darr;</kbd><kbd class="key">&uarr;</kbd> to navigate</span>
+                <span><kbd class="key">&crarr;</kbd> to select</span>
+                <span><kbd class="key">Esc</kbd> to exit</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="nav-links">
+          <a class="nav-link" href="recent.html" data-nav="recent" aria-current="page"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i><span>Recent</span></a>
+          <a class="nav-link" href="my-list.html" data-nav="my-list"><i class="fa-solid fa-bookmark" aria-hidden="true"></i><span>My List</span></a>
+          <a class="nav-icon-button" href="schedule.html" aria-label="Schedule" title="Schedule"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i></a>
+          <button class="nav-icon-button random-manga" type="button" aria-label="Watch a random anime" title="Random anime">
+            <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
+          </button>
+          <div class="nav-lang" role="radiogroup" aria-label="Audio language">
+            <button class="nav-lang-option" type="button" role="radio" aria-checked="true" data-lang-choice="dub" title="English dub">EN</button>
+            <button class="nav-lang-option" type="button" role="radio" aria-checked="false" data-lang-choice="sub" title="Japanese audio, English subs">JP</button>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-icon-button mobile-search-toggle" type="button" aria-label="Open search" aria-expanded="false">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          </button>
+          <a class="sign-in-button" href="#" target="_blank" rel="noopener noreferrer">Sign In</a>
+        </div>
+      </nav>
+    </header>
+    <div class="nav-menu" id="site-menu" aria-hidden="true" hidden>
+      <nav class="nav-drawer" aria-label="Site menu">
+        <div class="nav-drawer-header">
+          <a class="nav-drawer-brand" href="home.html" aria-label="HugAnime home">
+            <span class="logo-hug">HUG</span>
+            <span class="logo-anime">ANIME</span>
+          </a>
+          <button class="nav-drawer-close" type="button" aria-label="Close menu">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="nav-drawer-body">
+          <div class="nav-drawer-section">
+            <h2 class="nav-drawer-label">Browse</h2>
+            <a class="nav-drawer-link" href="home.html">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+              <span>Home</span>
+            </a>
+            <a class="nav-drawer-link" href="all-anime-index.html">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg></span>
+              <span>All Anime</span>
+            </a>
+            <a class="nav-drawer-link" href="#">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></span>
+              <span>Genres</span>
+            </a>
+            <a class="nav-drawer-link nav-drawer-link--mobile is-current" href="recent.html" aria-current="page">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+              <span>Recent</span>
+            </a>
+            <a class="nav-drawer-link nav-drawer-link--mobile" href="my-list.html">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg></span>
+              <span>My List</span>
+            </a>
+            <a class="nav-drawer-link" href="#">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/></svg></span>
+              <span>Top Anime</span>
+            </a>
+            <a class="nav-drawer-link nav-drawer-link--mobile" href="schedule.html">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></span>
+              <span>Schedule</span>
+            </a>
+            <a class="nav-drawer-link" href="#">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+              <span>Anime Music</span>
+            </a>
+            <a class="nav-drawer-link" href="#">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg></span>
+              <span>Guess the Anime</span>
+            </a>
+          </div>
+
+          <div class="nav-drawer-section">
+            <h2 class="nav-drawer-label">Account</h2>
+            <a class="nav-drawer-link" href="#">
+              <span class="nav-drawer-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <span>Sign In</span>
+            </a>
+          </div>
+
+          <div class="nav-drawer-settings">
+            <h2 class="nav-drawer-label" id="theme-label">Theme</h2>
+            <div class="theme-options" role="radiogroup" aria-labelledby="theme-label">
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Orange" title="Orange" data-theme-choice="orange"><span class="theme-dot"></span></button>
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Blue" title="Blue" data-theme-choice="blue"><span class="theme-dot"></span></button>
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Pink" title="Pink" data-theme-choice="pink"><span class="theme-dot"></span></button>
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Red" title="Red" data-theme-choice="red"><span class="theme-dot"></span></button>
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Multicolor (default)" title="Multicolor (default)" data-theme-choice="multi"><span class="theme-dot"></span></button>
+            </div>
+
+            <h2 class="nav-drawer-label" id="lang-label">Language</h2>
+            <div class="lang-toggle" role="radiogroup" aria-labelledby="lang-label">
+              <button class="lang-option" type="button" role="radio" aria-checked="false" data-lang-choice="sub">JP SUB</button>
+              <button class="lang-option" type="button" role="radio" aria-checked="true" data-lang-choice="dub">EN DUB</button>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+
+  <main class="lib" id="library" data-lib="recent">
+    <header class="lib_head">
+      <div>
+        <h1 class="lib_title">Recent</h1>
+        <p class="lib_sub" id="lib-sub">Pick up where you left off</p>
+      </div>
+      <div class="lib_tools">
+        <label class="lib_search" id="lib-search-wrap" hidden>
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="lib-search" type="search" placeholder="Search history" autocomplete="off" aria-label="Search history">
+        </label>
+        <button class="lib_btn" id="lib-clear" type="button" hidden><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span>Clear history</span></button>
+      </div>
+    </header>
+
+    <div id="lib-content" aria-live="polite"></div>
+
+    <div class="lib_empty" id="lib-empty" hidden>
+      <span class="lib_empty-icon"><i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i></span>
+      <h2></h2>
+      <p></p>
+      <a class="lib_cta" href="all-anime-index.html">Browse anime</a>
+    </div>
+  </main>
+
+  <footer class="site-footer" aria-label="Site footer">
+    <div class="site-footer_inner">
+      <div class="site-footer_top">
+        <div class="site-footer_about">
+          <a href="home.html" class="brand" aria-label="HugAnime home">
+            <span class="logo-hug">HUG</span>
+            <span class="logo-anime">ANIME</span>
+          </a>
+          <p class="site-footer_text">Watch anime online in sub or dub, track what you're watching, and keep a list of your favourites.</p>
+        </div>
+
+        <nav class="site-footer_col" aria-label="Browse">
+          <h2 class="site-footer_heading">Browse</h2>
+          <ul class="site-footer_links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="all-anime-index.html">All Anime</a></li>
+            <li><a href="schedule.html">Schedule</a></li>
+            <li><a href="recent.html" aria-current="page">Recent</a></li>
+            <li><a href="my-list.html">My List</a></li>
+                      </ul>
+        </nav>
+
+        <div class="site-footer_col">
+          <h2 class="site-footer_heading">Good to know</h2>
+          <ul class="site-footer_links">
+            <li><span>Your history is saved in this browser</span></li>
+            <li><span>Press <kbd class="site-footer_key">Ctrl</kbd> + <kbd class="site-footer_key">K</kbd> to search</span></li>
+            <li><span>Pick your accent colour in the menu</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="site-footer_bottom">
+        <p class="site-footer_note">HugAnime does not host any video files. Everything is provided by third-party services. Anime info courtesy of <a href="https://anilist.co" target="_blank" rel="noopener noreferrer">AniList</a>.</p>
+        <div class="site-footer_meta">
+          <span>&copy; <span id="footer-year">2026</span> HugAnime</span>
+          <a class="site-footer_top-btn" href="#page-top">Back to top
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script>document.getElementById("footer-year").textContent = new Date().getFullYear();</script>
+
+    <script src="./Js/title-lang.js"></script>
+    <script src="./Js/navbar.js"></script>
+  <script src="./Js/search.js"></script>
+  <script src="./Js/slidebar.js"></script>
+  <script src="./Js/library.js"></script>
+</body>
+</html>

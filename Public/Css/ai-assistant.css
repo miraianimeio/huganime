@@ -1,0 +1,323 @@
+/* ==========================================================================
+   HugAnime AI assistant (home page) - iPhone "Liquid Glass" style
+   Follows the site theme through --accent / --accent-rgb.
+   Tweak the look by editing the variables on .ha-ai-root.
+   ========================================================================== */
+
+.ha-ai-root {
+  --ai-accent: var(--accent, #4ed9ff);
+  --ai-accent-rgb: var(--accent-rgb, 78 217 255);
+  --ai-orb: 96px;                 /* orb size when it is in the centre */
+  --ai-orb-corner: 62px;          /* orb size when it waits in the corner */
+  --ai-glass: linear-gradient(145deg, rgb(255 255 255 / 20%), rgb(255 255 255 / 5%) 55%, rgb(255 255 255 / 10%));
+  --ai-glass-line: rgb(255 255 255 / 26%);
+  --ai-text: #f6f8fa;
+  --ai-text-dim: rgb(246 248 250 / 68%);
+  --ai-ease: cubic-bezier(.22, 1, .36, 1);
+  --ai-font: Inter, -apple-system, "SF Pro Text", "Segoe UI", Arial, sans-serif;
+  font-family: var(--ai-font);
+  color: var(--ai-text);
+}
+
+/* ---------- dimmed, blurred backdrop ---------------------------------- */
+.ha-ai__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: radial-gradient(ellipse at 50% 45%, rgb(var(--ai-accent-rgb) / 14%), rgb(3 8 12 / 78%) 72%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .45s ease, visibility 0s linear .45s;
+}
+.ha-ai-root.is-open .ha-ai__scrim { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .45s ease, visibility 0s; }
+
+/* ---------- the orb (button in the corner -> moves to the centre) ------ */
+.ha-ai__orb {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1120;
+  width: var(--ai-orb);
+  height: var(--ai-orb);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+  background: transparent;
+  transform-origin: 0 0;
+  transition: transform .8s var(--ai-ease);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.ha-ai__orb.no-anim { transition: none; }
+
+.ha-ai__orb-body {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 30% 24%, rgb(255 255 255 / 85%) 0 6%, rgb(255 255 255 / 0) 24%),
+    radial-gradient(circle at 70% 82%, rgb(var(--ai-accent-rgb) / 85%), rgb(var(--ai-accent-rgb) / 0) 60%),
+    radial-gradient(circle at 50% 50%, rgb(var(--ai-accent-rgb) / 40%), rgb(20 40 52 / 55%) 78%);
+  border: 1px solid rgb(255 255 255 / 45%);
+  box-shadow:
+    inset 0 2px 3px rgb(255 255 255 / 60%),
+    inset 0 -10px 18px rgb(var(--ai-accent-rgb) / 35%),
+    inset 0 0 22px rgb(255 255 255 / 12%),
+    0 10px 30px rgb(0 0 0 / 45%),
+    0 0 34px rgb(var(--ai-accent-rgb) / 38%);
+  will-change: transform;
+  animation: ha-ai-breathe 4.2s ease-in-out infinite;
+}
+/* slow-moving light inside the glass */
+.ha-ai__orb-body::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background: conic-gradient(from 0deg, transparent 0 55%, rgb(255 255 255 / 30%) 66%, transparent 78%);
+  animation: ha-ai-spin 7s linear infinite paused;
+  will-change: transform;
+}
+.ha-ai-root.is-open .ha-ai__orb-body::after { animation-play-state: running; }
+.ha-ai__orb svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 44%;
+  height: 44%;
+  z-index: 1;
+}
+/* ring that pulses while the voice is speaking */
+.ha-ai__orb::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--ai-accent-rgb) / 70%);
+  opacity: 0;
+  transform: scale(.9);
+}
+.ha-ai-root.is-speaking .ha-ai__orb::before { animation: ha-ai-ring 1.4s ease-out infinite; }
+.ha-ai-root.is-open .ha-ai__orb-body { animation: none; }
+.ha-ai__orb:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+/* small "Ask me" label that sits next to the corner orb */
+.ha-ai__hint {
+  position: fixed;
+  z-index: 1110;
+  right: 0;
+  bottom: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ai-text);
+  background: var(--ai-glass);
+  border: 1px solid var(--ai-glass-line);
+  background-color: rgb(24 38 46 / 92%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 40%), 0 8px 24px rgb(0 0 0 / 40%);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.ha-ai-root.show-hint:not(.is-open) .ha-ai__hint { opacity: 1; transform: none; }
+
+/* ---------- the glass panel ------------------------------------------- */
+.ha-ai__stage {
+  position: fixed;
+  z-index: 1100;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  width: min(460px, calc(100vw - 28px));
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: calc(var(--ai-orb) + 40px) 20px 20px;
+  border-radius: 34px;
+  background: var(--ai-glass), rgb(18 31 38 / 62%);
+  border: 1px solid var(--ai-glass-line);
+  box-shadow:
+    inset 0 1.5px 0 rgb(255 255 255 / 55%),
+    inset 0 -1px 0 rgb(255 255 255 / 12%),
+    inset 0 0 40px rgb(255 255 255 / 5%),
+    0 30px 80px rgb(0 0 0 / 55%),
+    0 0 0 1px rgb(0 0 0 / 25%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, calc(-50% + 22px)) scale(.94);
+  transition: opacity .35s ease, transform .6s var(--ai-ease), visibility 0s linear .6s;
+  scrollbar-width: none;
+}
+.ha-ai__stage::-webkit-scrollbar { display: none; }
+/* specular highlight along the top edge, like Liquid Glass */
+.ha-ai__stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 46%;
+  border-radius: 34px 34px 60% 60% / 34px 34px 24px 24px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 16%), rgb(255 255 255 / 0));
+  pointer-events: none;
+}
+.ha-ai-root.is-open .ha-ai__stage {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+  transition: opacity .4s ease .2s, transform .7s var(--ai-ease) .12s, visibility 0s;
+}
+
+.ha-ai__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ai-glass-line);
+  border-radius: 50%;
+  color: var(--ai-text);
+  font-size: 18px;
+  line-height: 1;
+  background: rgb(255 255 255 / 10%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%);
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+.ha-ai__close:hover { background: rgb(255 255 255 / 20%); }
+.ha-ai__close:active { transform: scale(.92); }
+
+/* ---------- caption (typed out while the voice plays) ----------------- */
+.ha-ai__caption {
+  position: relative;
+  min-height: 9.6em;
+  margin: 0 2px 14px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -.005em;
+  text-align: center;
+  text-wrap: pretty;
+}
+.ha-ai__ghost { visibility: hidden; }          /* reserves the full height */
+.ha-ai__typed { position: absolute; inset: 0; }
+.ha-ai__typed::after {                           /* blinking cursor while typing */
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -.16em;
+  border-radius: 2px;
+  background: var(--ai-accent);
+  animation: ha-ai-blink 1s steps(1) infinite;
+}
+.ha-ai-root.is-done .ha-ai__typed::after { display: none; }
+
+/* ---------- play/pause + wave ----------------------------------------- */
+.ha-ai__player { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.ha-ai__play {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ai-glass-line);
+  border-radius: 50%;
+  color: var(--ai-text);
+  font-size: 13px;
+  background: rgb(var(--ai-accent-rgb) / 22%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 40%);
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease;
+}
+.ha-ai__play:hover { background: rgb(var(--ai-accent-rgb) / 36%); }
+.ha-ai__play:active { transform: scale(.92); }
+.ha-ai__wave { flex: 1; display: flex; align-items: center; justify-content: center; gap: 3px; height: 40px; }
+.ha-ai__bar {
+  flex: none;
+  width: 4px;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, var(--ai-accent));
+  transform: scaleY(.1);
+  will-change: transform;
+  animation: ha-ai-wave var(--d, .9s) ease-in-out infinite alternate;
+  animation-delay: var(--dl, 0s);
+  animation-play-state: paused;
+  transition: transform .3s ease;
+}
+.ha-ai-root.is-speaking .ha-ai__bar { animation-play-state: running; }
+
+/* ---------- question chips -------------------------------------------- */
+.ha-ai__list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ha-ai__chip {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--ai-glass-line);
+  border-radius: 18px;
+  color: var(--ai-text);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+  background: linear-gradient(145deg, rgb(255 255 255 / 14%), rgb(255 255 255 / 4%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 32%), 0 4px 14px rgb(0 0 0 / 18%);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: background .2s ease, border-color .2s ease, transform .2s ease, opacity .4s ease;
+}
+.ha-ai-root.is-open .ha-ai__chip { opacity: 1; transform: none; transition-delay: calc(.45s + var(--i, 0) * 60ms), 0s, 0s, calc(.45s + var(--i, 0) * 60ms); }
+.ha-ai-root.is-open .ha-ai__chip:hover { transition-delay: 0s; background: linear-gradient(145deg, rgb(255 255 255 / 24%), rgb(255 255 255 / 8%)); }
+.ha-ai-root.is-open .ha-ai__chip:active { transition-delay: 0s; transform: scale(.985); }
+.ha-ai__chip[aria-current="true"] {
+  border-color: rgb(var(--ai-accent-rgb) / 75%);
+  background: linear-gradient(145deg, rgb(var(--ai-accent-rgb) / 38%), rgb(var(--ai-accent-rgb) / 12%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 45%), 0 0 22px rgb(var(--ai-accent-rgb) / 28%);
+}
+.ha-ai__chip:focus-visible, .ha-ai__play:focus-visible, .ha-ai__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* ---------- animations -------------------------------------------------- */
+@keyframes ha-ai-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+@keyframes ha-ai-spin { to { transform: rotate(360deg); } }
+@keyframes ha-ai-ring { 0% { opacity: .85; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.35); } }
+@keyframes ha-ai-blink { 50% { opacity: 0; } }
+@keyframes ha-ai-wave { from { transform: scaleY(.1); } to { transform: scaleY(var(--h, 1)); } }
+
+/* ---------- small screens ------------------------------------------------ */
+@media (max-width: 480px) {
+  .ha-ai-root { --ai-orb: 84px; --ai-orb-corner: 56px; }
+  .ha-ai__stage { border-radius: 30px; padding: calc(var(--ai-orb) + 36px) 14px 14px; }
+  .ha-ai__caption { font-size: 16px; min-height: 11.5em; }
+  .ha-ai__chip { padding: 11px 14px; font-size: 14px; }
+}
+@media (max-height: 640px) {
+  .ha-ai__caption { min-height: 7em; }
+}
+
+/* ---------- fallback when blur is not supported -------------------------- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ha-ai__stage { background: rgb(22 38 47 / 96%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-ai__orb, .ha-ai__stage, .ha-ai__scrim, .ha-ai__chip { transition-duration: .01s; transition-delay: 0s !important; }
+  .ha-ai__orb-body, .ha-ai__orb-body::after, .ha-ai__typed::after { animation: none; }
+  .ha-ai-root.is-speaking .ha-ai__orb::before { animation: none; }
+  .ha-ai__bar { animation: none; transform: scaleY(var(--h, .5)); }
+}

@@ -8,21 +8,24 @@ import { buildEmbedUrl } from "./servers.js";
 import { createAutoSkipper, seekMessages, readPlayerTime } from "./autoskip.js";
 
 const SERVER_LIST = [
-  { id: "s2", label: "VidStream-2" },
-  { id: "datsav", label: "HiLegacy" },
+  { id: "s2", label: "VidStream-1" },
+  { id: "vs2", label: "VidStream-2" },
+  { id: "vidplay", label: "Vidplay" },
   { id: "dghg", label: "HD-1" }
 ];
 
 // Servers whose URL needs MegaPlay's own episode id (looked up by the server, see anikoto.js)
-const LOOKUP_SERVERS = new Set(["s2"]);
+const LOOKUP_SERVERS = new Set(["s2", "vs2", "vidplay"]);
 
 // Servers whose player reports playback time to this page, so "Auto Skip" can work on them (MegaPlay: HD-1 and S-2)
-const SKIP_SERVERS = new Set(["dghg", "s2"]);
+const SKIP_SERVERS = new Set(["dghg", "s2", "vs2", "vidplay"]);
 
 const SERVER_EMBEDS = {
   datsav: (ctx) => buildEmbedUrl({ ...ctx, server: "datsav" }),
   dghg:   (ctx) => buildEmbedUrl({ ...ctx, server: "dghg" }),
-  s2:     (ctx) => buildEmbedUrl({ ...ctx, server: "s2" })
+  s2:     (ctx) => buildEmbedUrl({ ...ctx, server: "s2" }),
+  vs2:    (ctx) => buildEmbedUrl({ ...ctx, server: "vs2" }),
+  vidplay:(ctx) => buildEmbedUrl({ ...ctx, server: "vidplay" })
 };
 
 // Wag mong gagalawin 'to Dan!
@@ -39,6 +42,7 @@ export const state = {
   activeServer: SERVER_LIST[0].id,
   language: "sub",
   availability: {},   // "<server>:<sub|dub>" -> true / false / null (unknown) for the current episode
+  checked: false,     // true once the availability check for the current episode has finished
   playing: false,
   anime: null,
   mal: null,
@@ -205,13 +209,14 @@ async function startPlayback() {
     ctx.episodeId = info?.episodeId || "";
     if (!ctx.episodeId) {
       if (info) lookupHref = s2DebugUrl();
+      const name = SERVER_LIST.find((s) => s.id === ctx.server)?.label || "This server";
       lookupNote = !info
-        ? "S-2 could not be reached (is the HugAnime server running with npm start?), so the official trailer is playing."
+        ? `${name} could not be reached (is the HugAnime server running with npm start?), so the official trailer is playing.`
         : info.transient
           ? (info.lastError
-              ? `S-2 is having trouble downloading its episode list (${info.lastError}), so the official trailer is playing for now.`
-              : `S-2 is still downloading its episode list${info.progress?.series ? ` (${info.progress.series} anime so far)` : ""}, so the official trailer is playing. Try again in a few minutes.`)
-          : "S-2 does not have this episode, so the official trailer is playing.";
+              ? `${name} is having trouble downloading its episode list (${info.lastError}), so the official trailer is playing for now.`
+              : `${name} is still downloading its episode list${info.progress?.series ? ` (${info.progress.series} anime so far)` : ""}, so the official trailer is playing. Try again in a few minutes.`)
+          : `${name} does not have this episode, so the official trailer is playing.`;
     }
   }
 
@@ -273,6 +278,10 @@ export function goToEpisode(n, { autostart = false } = {}) {
   if (!Number.isFinite(ep) || ep < 1) ep = 1;
   if (state.totalEpisodes && ep > state.totalEpisodes) ep = state.totalEpisodes;
   state.currentEpisode = ep;
+  // the old episode's answers don't apply any more: hide every server until this episode has been checked
+  state.availability = {};
+  state.checked = false;
+  renderServers();
 
   const url = new URL(window.location.href);
   url.searchParams.set("id", state.animeId);
@@ -347,12 +356,15 @@ window.addEventListener("message", (event) => {
 });
 
 
-// A server is hidden only when its check answered exactly "false" (null/unknown stays visible).
-// If every server says false we show them all, in case the check itself is wrong.
+// A server is shown ONLY when its check confirmed it has this episode (true).
+// "false" (no episode) and "null" (couldn't tell) are both hidden, and so is everything until the check finishes.
+// One exception: if the check could not run at all (every answer is null, e.g. the backend is down) we can't know
+// anything, so all servers stay visible rather than leaving the viewer with nothing to click.
 function serverUsable(serverId, language) {
+  if (!state.checked) return false;
   const values = Object.values(state.availability);
-  if (values.length && values.every((v) => v === false)) return true;
-  return state.availability[`${serverId}:${language}`] !== false;
+  if (values.length && values.every((v) => v === null || v === undefined)) return true;
+  return state.availability[`${serverId}:${language}`] === true;
 }
 
 function renderServers() {
@@ -384,6 +396,12 @@ function renderServers() {
     rows.push(row);
   }
 
+  if (!rows.length) {
+    const note = el("div", "server-row");
+    note.textContent = state.checked ? "No server has this episode yet." : "Checking servers…";
+    rows.push(note);
+  }
+
   els.serverRows.replaceChildren(...rows);
   paintServers();
 }
@@ -406,18 +424,22 @@ async function refreshAvailability() {
   const result = { ...(checked || {}) };
   // S-2 is hidden only when the lookup gave a final "no". If the lookup could not answer (service unreachable,
   // catalog still loading, API error) S-2 stays visible instead of flashing in and vanishing.
-  if (!info || (!info.episodeId && info.transient)) {
-    result["s2:sub"] = null;
-    result["s2:dub"] = null;
-  } else if (!info.episodeId) {
-    result["s2:sub"] = false;
-    result["s2:dub"] = false;
-  } else {
-    result["s2:sub"] = info.hasSub === false ? false : true;
-    result["s2:dub"] = info.hasDub === false ? false : info.hasDub === true ? true : null;
+  // VidStream-1, VidStream-2 and Vidplay all use the same Anikoto episode id, so they share this answer.
+  for (const id of LOOKUP_SERVERS) {
+    if (!info || (!info.episodeId && info.transient)) {
+      result[`${id}:sub`] = null;
+      result[`${id}:dub`] = null;
+    } else if (!info.episodeId) {
+      result[`${id}:sub`] = false;
+      result[`${id}:dub`] = false;
+    } else {
+      result[`${id}:sub`] = info.hasSub === false ? false : true;
+      result[`${id}:dub`] = info.hasDub === false ? false : info.hasDub === true ? true : null;
+    }
   }
 
   state.availability = result;
+  state.checked = true;
   renderServers();
 
   if (serverUsable(state.activeServer, state.language)) return;

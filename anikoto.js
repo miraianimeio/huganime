@@ -255,6 +255,34 @@ const episodeCache = new Map();
 const truthy = (v) => v === true || v === 1 || v === "1" || v === "true" || (typeof v === "string" && /^(yes|sub|dub)$/i.test(v)) || (Number(v) > 0);
 const falsy = (v) => v === false || v === 0 || v === "0" || v === "false" || v === null;
 
+// Does this episode have <lang> ("sub" / "dub")? true / false, or null when the response says nothing about it.
+// Anikoto lists each episode with  embed_url: { sub, dub }  (a language that is missing or empty = not available),
+// older shapes use plain  sub / dub / has_dub  fields. Any field whose name mentions the language counts.
+const nonEmpty = (v) => {
+  if (v === true) return true;
+  if (v === false || v === null || v === undefined) return false;
+  if (typeof v === "number") return v > 0;
+  if (typeof v === "string") return v.trim() !== "" && !/^(0|false|null|none|no)$/i.test(v.trim());
+  if (Array.isArray(v)) return v.some(nonEmpty);
+  if (typeof v === "object") return Object.values(v).some(nonEmpty);
+  return false;
+};
+export function languageFlag(item, lang) {
+  const found = [];
+  const scan = (obj, depth) => {
+    if (!obj || typeof obj !== "object" || depth > 2) return;
+    for (const [key, value] of Object.entries(obj)) {
+      if (key.toLowerCase().includes(lang)) found.push(nonEmpty(value));
+      else if (value && typeof value === "object" && !Array.isArray(value)) scan(value, depth + 1);
+    }
+  };
+  scan(item, 0);
+  if (found.length) return found.some(Boolean);
+  // "embed_url" lists only the languages that exist: present for other languages but absent for this one = not available
+  const listsLanguages = Object.entries(item || {}).some(([key, value]) => /embed/i.test(key) && value && typeof value === "object" && Object.keys(value).length > 0);
+  return listsLanguages ? false : null;
+}
+
 export async function loadEpisodes(seriesId) {
   const hit = episodeCache.get(seriesId);
   if (hit && Date.now() - hit.at < EPISODES_TTL) return hit.value;
@@ -265,9 +293,7 @@ export async function loadEpisodes(seriesId) {
     .map((item) => {
       const number = Number(pick(item, ["number", "episode", "episode_no", "episodeNo", "ep", "num", "episode_number"]));
       const embed = asId(pick(item, ["episode_embed_id", "embed_id", "embedId", "episodeEmbedId"]));
-      const sub = pick(item, ["sub", "has_sub", "hasSub", "is_sub"]);
-      const dub = pick(item, ["dub", "has_dub", "hasDub", "is_dub"]);
-      return { number, embed, hasSub: sub === undefined ? null : truthy(sub) && !falsy(sub), hasDub: dub === undefined ? null : truthy(dub) && !falsy(dub) };
+      return { number, embed, hasSub: languageFlag(item, "sub"), hasDub: languageFlag(item, "dub") };
     })
     .filter((e) => Number.isFinite(e.number) && e.embed);
 
@@ -309,7 +335,10 @@ export async function debugInfo({ animeId, malId, titles, episode }) {
   if (result.seriesId) {
     try {
       const { sampleKeys, count, episodes } = await loadEpisodes(result.seriesId);
-      sample = { episodeFieldNames: sampleKeys, episodesInResponse: count, episodeNumbers: episodes.map((e) => e.number).slice(0, 60) };
+      sample = {
+        episodeFieldNames: sampleKeys, episodesInResponse: count, episodeNumbers: episodes.map((e) => e.number).slice(0, 60),
+        languages: episodes.slice(0, 5).map((e) => ({ episode: e.number, hasSub: e.hasSub, hasDub: e.hasDub }))
+      };
     } catch { /* shown in result.reason */ }
   }
   // catalog entries whose title shares words with the asked anime: shows whether Anikoto lists it under another name

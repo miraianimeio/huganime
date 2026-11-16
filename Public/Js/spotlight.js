@@ -13,7 +13,9 @@
   const section = document.getElementById("spotlight");
   if (!section) return;
 
-  const QUERY = `
+  // The page <head> already sent this request (window.__spotlightData) so the hero shows sooner.
+  // This copy is only the fallback (retry / 429); keep both in sync.
+  const QUERY = window.__spotlightQuery || `
     query {
       Page(page: 1, perPage: 14) {
         media(type: ANIME, isAdult: false, status: RELEASING, sort: TRENDING_DESC) {
@@ -79,7 +81,24 @@
     return total + " eps";
   }
 
+  // wide banners look best; fall back to covers only if there are too few
+  function pickSlides(json) {
+    const media = json?.data?.Page?.media || [];
+    const withBanner = media.filter((m) => m.bannerImage);
+    const list = withBanner.length >= 3 ? withBanner : media;
+    return list.slice(0, MAX_SLIDES);
+  }
+
   async function fetchSlides() {
+    // 1) the request that was already started in <head>
+    if (window.__spotlightData) {
+      try {
+        const early = pickSlides(await window.__spotlightData);
+        if (early.length) return early;
+      } catch { /* fall through to a normal request */ }
+      window.__spotlightData = null;
+    }
+    // 2) normal request (with a retry when AniList says "slow down")
     for (let i = 0; i < 2; i++) {
       const res = await fetch(API, {
         method: "POST",
@@ -93,11 +112,7 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const json = await res.json();
       if (json.errors?.length) throw new Error(json.errors[0].message);
-      const media = json.data?.Page?.media || [];
-      // wide banners look best; fall back to covers only if there are too few
-      const withBanner = media.filter((m) => m.bannerImage);
-      const list = withBanner.length >= 3 ? withBanner : media;
-      return list.slice(0, MAX_SLIDES);
+      return pickSlides(json);
     }
     throw new Error("Rate limited");
   }

@@ -38,9 +38,7 @@ a {
   z-index: 5;
   top: 0;
   border-bottom: 1px solid rgb(255 255 255 / 7%);
-  background: rgb(24 24 24 / 78%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgb(24 24 24 / 95%);
 }
 
 .nav-container {
@@ -1476,10 +1474,9 @@ a[role="button"] {
   padding: 0;
   border: 0;
   border-radius: 12px;
-  background: rgb(255 255 255 / 10%);
+  background: rgb(40 40 44 / 70%);
   color: #fff;
   cursor: pointer;
-  backdrop-filter: blur(8px);
   transition: background 0.2s, color 0.2s, transform 0.15s;
 }
 .spotlight_arrow svg { width: 20px; height: 20px; }
@@ -2328,3 +2325,26 @@ video {
 @media (max-width: 330px) {
   .site-footer_top { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* =====================================================
+   PERFORMANCE
+   ===================================================== */
+/* Loading placeholders: a gentle fade (runs on the GPU) instead of a moving gradient
+   that makes the browser repaint every frame. */
+.anime-card--skeleton .anime-card_poster,
+.top-anime_skeleton,
+.top-anime_skeleton-row {
+  background-image: none;
+  animation: sk-pulse 1.6s ease-in-out infinite;
+}
+.anime-card--skeleton .anime-card_poster { background-color: #122029; }
+.top-anime_skeleton { background-color: #151618; }
+.top-anime_skeleton-row { background-color: #0f1011; }
+.spotlight:not(.is-ready) { background: #0d0d0f; animation: none; }
+@keyframes sk-pulse { 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .anime-card--skeleton .anime-card_poster, .top-anime_skeleton, .top-anime_skeleton-row { animation: none; }
+}
+
+/* Font Awesome now loads without blocking the page: give its icons their room up front so nothing jumps when it arrives */
+.fa-solid, .fa-regular, .fa-brands { display: inline-block; min-width: 1em; text-align: center; }

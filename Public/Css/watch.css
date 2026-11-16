@@ -196,8 +196,8 @@ a {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 4px 12px;
-  padding: 4px 12px;
+  gap: 2px 12px;
+  padding: 2px 12px;
 }
 
 .controls_left {
@@ -209,21 +209,21 @@ a {
 
 .ctrl {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 32px;
   align-items: center;
-  gap: 7px;
-  padding: 0 10px;
+  gap: 6px;
+  padding: 0 8px;
   border: 0;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   transition: color 0.15s ease;
 }
 
 .ctrl svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .ctrl:hover:not(:disabled) {
@@ -241,8 +241,8 @@ a {
 
 .ctrl_box {
   display: inline-grid;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   place-items: center;
   border: 2px solid currentColor;
   border-radius: 3px;
@@ -323,29 +323,41 @@ a {
   color: var(--muted);
 }
 
+/* small square-cornered boxes, all in one straight row (scrolls sideways instead of wrapping on narrow screens) */
 .server-pills {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex: 1;
+  flex-wrap: nowrap;
+  min-width: 0;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.server-pills::-webkit-scrollbar {
+  display: none;
 }
 
 .server-btn {
   display: inline-flex;
-  min-height: 42px;
+  flex: none;
+  min-height: 34px;
   align-items: center;
-  gap: 7px;
-  padding: 0 16px;
+  gap: 6px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--panel-2);
   color: var(--muted);
+  font-size: 0.86rem;
+  white-space: nowrap;
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
 }
 
 .server-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .server-btn:hover {
@@ -698,8 +710,12 @@ a {
     padding: 12px 14px;
   }
 
+  .server-pills {
+    width: 100%;
+  }
+
   .server-btn {
-    min-height: 44px;
+    min-height: 40px;
   }
 
   .series {
@@ -792,7 +808,7 @@ a {
   .ctrl {
     flex: none;
     min-width: 0;
-    min-height: 42px;
+    min-height: 34px;
     padding: 0 clamp(3px, 1.1vw, 8px);
     gap: clamp(3px, 1vw, 5px);
     border-radius: 0;

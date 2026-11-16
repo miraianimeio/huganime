@@ -9,17 +9,6 @@
 // bad episode/language). watch.js treats "" as "no source" and falls back to the trailer.
 
 export const SERVER_PROFILES = {
-  datsav: {
-    label: "DatSaV",
-    host: "https://zokoanime.video",
-    path: "/stream/mal",
-    idField: "malId",
-    probe: { requires: "window.__P=" },   // the embed page contains this when a stream exists
-    params: {
-      sub: { base: { autostart: "true" }, skip: { autostart: "true" } },
-      dub: { base: { autostart: "true" }, skip: { autostart: "true" } }
-    }
-  },
   // S-2 (MegaPlay's HiAnime library). Its URL has no anime id and no episode number:
   //   https://megaplay.buzz/videojs/stream/s-2/{episodeId}/{sub|dub}
   // {episodeId} is looked up from the AniList anime + episode by the server (anikoto.js, route /s2-episode).
@@ -33,6 +22,33 @@ export const SERVER_PROFILES = {
     params: {
       sub: { base: {}, skip: {} },
       dub: { base: {}, skip: {} }
+    }
+  },
+  // VidStream-2 and Vidplay: same episode id as S-2 (looked up by anikoto.js), different player hosts:
+  //   https://megaplay.buzz/stream/s-2/{episodeId}/{sub|dub}?autostart=true      (VidStream-2)
+  //   https://vidtube.site/stream/s-2/{episodeId}/{sub|dub}?autostart=true       (Vidplay)
+  vs2: {
+    label: "VidStream-2",
+    host: "https://megaplay.buzz",
+    path: "/stream/s-2",
+    idField: "episodeId",
+    route: "episode-id",
+    lookup: true,
+    params: {
+      sub: { base: { autostart: "true" }, skip: { autostart: "true" } },
+      dub: { base: { autostart: "true" }, skip: { autostart: "true" } }
+    }
+  },
+  vidplay: {
+    label: "Vidplay",
+    host: "https://vidtube.site",
+    path: "/stream/s-2",
+    idField: "episodeId",
+    route: "episode-id",
+    lookup: true,
+    params: {
+      sub: { base: { autostart: "true" }, skip: { autostart: "true" } },
+      dub: { base: { autostart: "true" }, skip: { autostart: "true" } }
     }
   },
   dghg: {

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>TikTok Mode | HugAnime</title>
+  <meta name="description" content="Swipe through short anime clips on HugAnime.">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" type="image/png" href="../Assets/Favicon-001.png">
+  <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="./Css/tiktok.css">
+</head>
+<body class="tt-body">
+  <div class="tt-app" id="tt-app">
+
+    <!-- top bar: back, For You / Following, sound -->
+    <header class="tt-top">
+      <a class="tt-top-btn" href="home.html" aria-label="Back to HugAnime">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+      </a>
+
+      <div class="tt-tabs" role="tablist" aria-label="Feed">
+        <button class="tt-tab" type="button" role="tab" aria-selected="false" data-tab="following">Following</button>
+        <button class="tt-tab is-active" type="button" role="tab" aria-selected="true" data-tab="foryou">For You</button>
+      </div>
+
+      <button class="tt-top-btn" id="tt-mute" type="button" aria-label="Sound is on. Press to mute" aria-pressed="false">
+        <svg class="tt-ico-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        <svg class="tt-ico-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+      </button>
+    </header>
+
+    <!-- the feed: one video per screen, swipe / scroll to the next one -->
+    <main class="tt-feed" id="tt-feed" tabindex="0" aria-label="Video feed. Use the up and down arrow keys to change video."></main>
+
+    <!-- desktop only: up / down buttons next to the phone-shaped feed -->
+    <nav class="tt-desk-nav" aria-label="Change video">
+      <button class="tt-desk-btn" id="tt-prev" type="button" aria-label="Previous video">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+      </button>
+      <button class="tt-desk-btn" id="tt-next" type="button" aria-label="Next video">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </nav>
+
+    <!-- comments sheet -->
+    <div class="tt-sheet" id="tt-comments" role="dialog" aria-modal="true" aria-labelledby="tt-comments-title" hidden>
+      <div class="tt-sheet-scrim" data-close></div>
+      <section class="tt-sheet-panel">
+        <header class="tt-sheet-head">
+          <h2 id="tt-comments-title">Comments</h2>
+          <button class="tt-sheet-close" type="button" data-close aria-label="Close comments">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+        <ul class="tt-comment-list" id="tt-comment-list"></ul>
+        <form class="tt-comment-form" id="tt-comment-form" autocomplete="off">
+          <input id="tt-comment-input" type="text" maxlength="200" placeholder="Add a comment..." aria-label="Add a comment">
+          <button type="submit" aria-label="Post comment">Post</button>
+        </form>
+      </section>
+    </div>
+
+    <!-- share sheet -->
+    <div class="tt-sheet tt-sheet--small" id="tt-share" role="dialog" aria-modal="true" aria-labelledby="tt-share-title" hidden>
+      <div class="tt-sheet-scrim" data-close></div>
+      <section class="tt-sheet-panel">
+        <header class="tt-sheet-head">
+          <h2 id="tt-share-title">Share</h2>
+          <button class="tt-sheet-close" type="button" data-close aria-label="Close share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+        <div class="tt-share-actions">
+          <button class="tt-share-btn" id="tt-copy" type="button">
+            <span class="tt-share-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></span>
+            Copy link
+          </button>
+          <button class="tt-share-btn" id="tt-native" type="button">
+            <span class="tt-share-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></span>
+            More...
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div class="tt-toast" id="tt-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="./Js/tiktok-data.js"></script>
+  <script src="./Js/tiktok.js"></script>
+</body>
+</html>

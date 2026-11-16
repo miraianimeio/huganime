@@ -21,6 +21,12 @@ S-2 needs MegaPlay's own episode id, which `npm start` looks up from the Anikoto
 - If one anime still shows the trailer, open `/s2-debug?animeId=<anilistId>&title=<title>` to see why.
   To force a match, create `data/s2-series.json` containing `{ "<anilistId>": <anikotoSeriesId> }` (the series id is the number in `https://anikotoapi.site/series/<id>`).
 
+## VidStream-1, VidStream-2 and Vidplay
+All three use the same Anikoto episode id (the `/s2-episode` lookup above) and only differ in the player address (`Public/Js/servers.js`):
+- VidStream-1: `https://megaplay.buzz/videojs/stream/s-2/{episodeId}/{sub|dub}`
+- VidStream-2: `https://megaplay.buzz/stream/s-2/{episodeId}/{sub|dub}?autostart=true`
+- Vidplay: `https://vidtube.site/stream/s-2/{episodeId}/{sub|dub}?autostart=true`
+
 ## Auto Skip (HD-1 and S-2)
 Turn on **Auto Skip** under the player. It uses the free AniSkip database (the server fetches it through `/skip-times`, see `aniskip.js`)
 and the playback time that the MegaPlay player reports to the page (`Public/Js/autoskip.js`).

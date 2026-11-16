@@ -67,8 +67,11 @@ export async function probeServer(server, language, ids, episode, { pages = fals
       return body.includes(profile.probe.requires);
     }
 
-    // No marker (e.g. HD-1): reading a page is only a guess, so it may confirm a server but never hide it.
-    // (Embed pages often look like errors to a script even when they play fine in a browser.)
+    // No marker (e.g. HD-1): a plain "not found" means the server has no such episode / language.
+    if ([400, 404, 410].includes(response.status)) return false;
+    // Otherwise reading a page is only a guess: a good page confirms the server, anything else stays "unknown".
+    // (Embed pages often look like errors to a script even when they play fine in a browser, and the watch page
+    // only shows servers that were confirmed, so an unclear page is hidden rather than shown.)
     return response.ok && !looksLikeErrorPage(body) ? true : null;  } catch {
     return null;
   }

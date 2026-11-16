@@ -10,12 +10,25 @@
 (function () {
   "use strict";
 
+  // Loads its own stylesheet (so the home page does not have to wait for it) and builds the
+  // assistant only once the styles are there - no unstyled flash, no layout jump.
+  var cssLink = document.createElement("link");
+  cssLink.rel = "stylesheet";
+  cssLink.href = new URL("../Css/ai-assistant.css", (document.currentScript && document.currentScript.src) || document.baseURI).href;
+  var booted = false;
+  function boot() { if (booted) return; booted = true; main(); }
+  cssLink.addEventListener("load", boot);
+  cssLink.addEventListener("error", boot);
+  document.head.appendChild(cssLink);
+
+  function main() {
+
   var VOICE_BASE = new URL("../Assets/Voice/", document.baseURI).href;
 
   var INTRO = {
     text: "Is there something you\u2019d like to know?",
     src: "intro.mp3",
-    t: { start: 0, end: 2.895, gaps: [] }
+      w: [[0.17,0.51],[0.51,0.85],[0.85,1.53],[1.53,1.87],[1.87,2.21],[2.21,2.55],[2.55,2.89]],
   };
 
   // Order = order of the buttons. "src" is the file inside Assets/Voice/.
@@ -24,19 +37,19 @@
       q: "Is HugAnime free?",
       text: "Is HugAnime free? Yes. You can watch without paying or signing up for anything.",
       src: "is-huganime-free.mp3",
-      t: { start: 0.415, end: 7.662, gaps: [[2.159,.698],[3.126,.417],[4.941,.19],[6.609,.189]] }
+      w: [[0.42,0.71],[0.71,1.87],[1.87,2.16],[2.86,3.13],[3.54,3.82],[3.82,4.09],[4.09,4.37],[4.37,4.92],[4.92,5.46],[5.46,5.74],[5.74,6.29],[6.29,6.56],[6.56,6.84],[6.84,7.66]],
     },
     {
       q: "What\u2019s the difference between SUB and DUB?",
       text: "What\u2019s the difference between SUB and DUB? SUB plays the original Japanese audio with English subtitles. DUB plays the English-dubbed version. Not every anime has a dub.",
       src: "sub-vs-dub.mp3",
-      t: { start: 0.187, end: 16.952, gaps: [[2.934,.505],[5.039,.35],[7.319,.348],[9.443,.479],[11.414,.257],[13.041,.347],[14.649,.225]] }
+      w: [[0.19,0.46],[0.46,0.74],[0.74,1.56],[1.56,2.11],[2.11,2.38],[2.38,2.66],[2.66,2.93],[3.44,3.67],[3.67,3.9],[3.9,4.12],[4.12,5.04],[5.39,6.35],[6.35,7.32],[7.67,7.96],[7.96,8.55],[8.55,9.44],[9.92,10.42],[10.42,10.92],[10.92,11.41],[11.67,13.04],[13.39,14.04],[14.04,14.36],[14.36,15.01],[15.01,15.98],[15.98,16.3],[16.3,16.63],[16.63,16.95]],
     },
     {
       q: "The video won\u2019t play. What should I do?",
       text: "The video won\u2019t play. What should I do? Try another server under the player (HD-1, S-2, Vidplay, etc.). Servers that don\u2019t have your episode are hidden automatically, so any server you can see should work. If S-2 shows a trailer, give it a few minutes and try again.",
       src: "video-wont-play.mp3",
-      t: { start: 0.187, end: 25.484, gaps: [[1.823,.593],[3.602,.591],[6.281,.337],[7.576,.284],[8.325,.31],[9.513,.279],[10.84,.687],[13.441,.334],[15.573,.608],[17.835,.25],[19.787,.418],[22.605,.408]] }
+      w: [[0.19,0.51],[0.51,1.17],[1.17,1.5],[1.5,1.82],[2.42,2.71],[2.71,3.01],[3.01,3.31],[3.31,3.6],[4.19,4.54],[4.54,5.58],[5.58,6.28],[6.62,7.26],[7.26,7.58],[7.86,8.33],[8.64,9.51],[9.79,10.21],[10.21,10.63],[10.63,10.84],[11.53,11.91],[11.91,12.1],[12.1,12.29],[12.29,12.48],[12.48,12.68],[12.68,13.44],[13.78,14.0],[14.0,14.45],[14.45,15.57],[16.18,16.51],[16.51,17.16],[17.16,17.82],[17.82,18.15],[18.15,18.48],[18.48,18.8],[18.8,19.13],[19.13,19.46],[19.46,19.79],[20.2,20.8],[20.8,21.1],[21.1,21.4],[21.4,22.0],[22.0,22.3],[22.3,22.6],[23.01,23.32],[23.32,23.63],[23.63,24.25],[24.25,24.56],[24.56,24.87],[24.87,25.48]],
     },
     {
       q: "What does Auto Skip do?",
@@ -47,7 +60,7 @@
       q: "What is HugAnime?",
       text: "What is HugAnime? HugAnime is a free anime streaming site where you can find, watch and keep track of your favorite shows, all in one place.",
       src: "what-is-huganime.mp3",
-      t: { start: 0.19, end: 10.949, gaps: [[1.77,.387],[3.11,.361],[5.984,.351],[9.325,.329]] }
+      w: [[0.19,0.45],[0.45,0.72],[0.72,1.77],[2.16,3.11],[3.47,3.72],[3.72,3.97],[3.97,4.23],[4.23,4.98],[4.98,5.48],[5.48,5.73],[5.73,5.98],[6.33,6.58],[6.58,6.83],[6.83,7.08],[7.08,7.33],[7.33,7.58],[7.58,7.83],[7.83,8.08],[8.08,8.33],[8.33,8.58],[8.58,9.32],[9.65,9.91],[9.91,10.17],[10.17,10.43],[10.43,10.69],[10.69,10.95]],
     }
   ];
 
@@ -169,34 +182,38 @@
 
   function showText(p) {
     var t = current ? current.text : "";
-    var n = Math.ceil(Math.min(1, Math.max(0, p)) * t.length);
+    var n = Math.ceil(Math.min(1, Math.max(0, p)) * t.length - 1e-6);
     if (n === lastShown) return;                 // nothing new to draw this frame
     lastShown = n;
     typedEl.textContent = t.slice(0, n);
   }
 
-  // How much of the caption has been spoken at time t (0..1).
-  // Pauses in the voice are cut out, so the text waits when the voice waits,
-  // and the caption only reaches 100% when the voice is really finished.
-  function spokenAt(t, timing) {
-    if (!timing) {
+  // Word-by-word sync. Each caption word has [start, end] seconds in its clip
+  // (measured from the real audio: the pauses in the voice are used as anchors),
+  // so the text shows each word while it is being spoken - not before.
+  function charsAt(t, item) {
+    var words = item.text.split(" "), w = item.w;
+    if (!w || w.length !== words.length) {          // no timing data: fall back to an even spread
       var d = audio.duration;
-      return (isFinite(d) && d > 0) ? t / d : 0;
+      return (isFinite(d) && d > 0) ? Math.ceil(Math.min(1, t / d) * item.text.length) : 0;
     }
-    var total = timing.end - timing.start, now = Math.min(Math.max(t, timing.start), timing.end) - timing.start;
-    for (var i = 0; i < timing.gaps.length; i++) {
-      var gs = timing.gaps[i][0], ge = gs + timing.gaps[i][1];
-      total -= timing.gaps[i][1];
-      if (t > ge) now -= timing.gaps[i][1];
-      else if (t > gs) now -= (t - gs);
+    var n = 0, off = 0;
+    for (var i = 0; i < words.length; i++) {
+      var len = words[i].length, a = w[i][0], b = w[i][1];
+      if (t >= b) n = off + len;
+      else {
+        if (t > a) n = off + Math.ceil(len * (t - a) / (b - a));
+        break;
+      }
+      off += len + 1;
     }
-    return total > 0 ? Math.max(0, now) / total : 1;
+    return n;
   }
 
   var lastShown = -1;
   function loopAudioTyping() {
     cancelAnimationFrame(raf);
-    showText(reduceMotion ? 1 : spokenAt(audio.currentTime, current && current.t));
+    showText(reduceMotion || !current ? 1 : charsAt(audio.currentTime, current) / current.text.length);
     if (!audio.paused && !audio.ended) raf = requestAnimationFrame(loopAudioTyping);
   }
 
@@ -335,4 +352,5 @@
       setTimeout(function () { root.classList.remove("show-hint"); }, 6000);
     }, 2500);
   }
+  } // end main
 })();

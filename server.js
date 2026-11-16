@@ -10,6 +10,8 @@
 import "./env.js";
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
+import { brotliCompress, gzip } from "node:zlib";
+import { promisify } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { probeAll } from "./Public/Js/server-check.js";
@@ -42,6 +44,14 @@ const TYPES = {
   ".mp3": "audio/mpeg",
   ".txt": "text/plain; charset=utf-8"
 };
+
+const brotli = promisify(brotliCompress);
+const gzipAsync = promisify(gzip);
+// text files are compressed once and kept in memory (re-done only when the file changes)
+const COMPRESSIBLE = new Set([".html", ".css", ".js", ".json", ".svg", ".txt", ".ico"]);
+const packed = new Map();
+// images, fonts and audio rarely change -> the browser may keep them for a day; code files always revalidate (edits show up at once)
+const LONG_CACHE = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".woff", ".woff2", ".mp3", ".svg", ".ico"]);
 
 const isId = (value) => /^\d{1,9}$/.test(String(value ?? ""));
 
@@ -121,13 +131,61 @@ async function serveFile(pathname, req, res) {
 
   try {
     let target = file;
-    if ((await stat(target)).isDirectory()) target = path.join(target, "index.html");
-    const data = await readFile(target);
-    res.writeHead(200, {
-      "Content-Type": TYPES[path.extname(target).toLowerCase()] || "application/octet-stream",
-      "Cache-Control": "no-cache"
-    });
-    res.end(req.method === "HEAD" ? undefined : data);
+    let info = await stat(target);
+    if (info.isDirectory()) { target = path.join(target, "index.html"); info = await stat(target); }
+    const ext = path.extname(target).toLowerCase();
+    const type = TYPES[ext] || "application/octet-stream";
+    const etag = `W/"${info.size.toString(16)}-${Math.floor(info.mtimeMs).toString(16)}"`;
+    const headers = {
+      "Content-Type": type,
+      "Cache-Control": ext === ".mp3" ? "public, max-age=3600" : LONG_CACHE.has(ext) ? "public, max-age=86400" : "no-cache",
+      ETag: etag,
+      "Last-Modified": info.mtime.toUTCString(),
+      "X-Content-Type-Options": "nosniff",
+      "Accept-Ranges": "bytes"
+    };
+
+    // nothing changed since the browser's copy -> tiny 304 answer
+    if (req.headers["if-none-match"] === etag) {
+      res.writeHead(304, headers);
+      return res.end();
+    }
+
+    // audio / video: support Range requests so seeking and replaying work smoothly
+    const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+    if (range && (ext === ".mp3" || ext === ".mp4" || ext === ".webm")) {
+      let start = range[1] === "" ? Math.max(0, info.size - Number(range[2])) : Number(range[1]);
+      let end = range[1] === "" || range[2] === "" ? info.size - 1 : Math.min(Number(range[2]), info.size - 1);
+      if (start > end || start >= info.size) {
+        res.writeHead(416, { "Content-Range": `bytes */${info.size}` });
+        return res.end();
+      }
+      const data = await readFile(target);
+      res.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${info.size}`, "Content-Length": end - start + 1 });
+      return res.end(req.method === "HEAD" ? undefined : data.subarray(start, end + 1));
+    }
+
+    let body;
+    let encoding = "";
+    if (COMPRESSIBLE.has(ext)) {
+      const accept = String(req.headers["accept-encoding"] || "");
+      encoding = /\bbr\b/.test(accept) ? "br" : /\bgzip\b/.test(accept) ? "gzip" : "";
+      const key = `${target}|${encoding}`;
+      const hit = packed.get(key);
+      if (hit && hit.etag === etag) body = hit.body;
+      else {
+        const raw = await readFile(target);
+        body = encoding === "br" ? await brotli(raw) : encoding === "gzip" ? await gzipAsync(raw, { level: 9 }) : raw;
+        packed.set(key, { etag, body });
+      }
+      headers.Vary = "Accept-Encoding";
+      if (encoding) headers["Content-Encoding"] = encoding;
+    } else {
+      body = await readFile(target);
+    }
+    headers["Content-Length"] = body.length;
+    res.writeHead(200, headers);
+    res.end(req.method === "HEAD" ? undefined : body);
   } catch {
     res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
     res.end("Not found");

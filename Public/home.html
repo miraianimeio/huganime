@@ -2,16 +2,56 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="./Css/home.css">
-  <link rel="stylesheet" href="./Css/scrollbar.css">
-<link rel="stylesheet" href="./Css/modal.css">
-  <link rel="stylesheet" href="./Css/ai-assistant.css">
-  <link rel="stylesheet" href="./Css/nav-links.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="../Assets/Favicon-001.png">
     <title>HugAnime</title>
-  <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+    <link rel="icon" type="image/png" href="../Assets/Favicon-001.png">
+    <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+
+    <!-- Speed: open the connections early and start the Spotlight request right now,
+         instead of waiting until the page has been parsed. Js/spotlight.js picks the result up. -->
+    <link rel="preconnect" href="https://graphql.anilist.co">
+    <link rel="preconnect" href="https://s4.anilist.co">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <script>
+    (function () {
+      // Keep this query in sync with the fallback QUERY in Js/spotlight.js (same fields).
+      var Q = "query{Page(page:1,perPage:14){media(type:ANIME,isAdult:false,status:RELEASING,sort:TRENDING_DESC){id siteUrl title{romaji english}bannerImage coverImage{extraLarge large}description(asHtml:false)format status episodes averageScore startDate{year month day}endDate{year month day}nextAiringEpisode{episode}trailer{id site}}}}";
+      window.__spotlightQuery = Q;
+      try {
+        var p = fetch("https://graphql.anilist.co", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ query: Q })
+        }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+        window.__spotlightData = p;
+        p.then(function (j) {
+          // preload the first banner so the big image starts downloading before any script has run
+          var m = (j && j.data && j.data.Page && j.data.Page.media) || [];
+          var wb = m.filter(function (x) { return x.bannerImage; });
+          var first = wb.length >= 3 ? wb[0].bannerImage : (m[0] && m[0].coverImage && (m[0].coverImage.extraLarge || m[0].coverImage.large));
+          if (first && /^https?:/i.test(first)) {
+            var l = document.createElement("link");
+            l.rel = "preload"; l.as = "image"; l.href = first; l.fetchPriority = "high";
+            document.head.appendChild(l);
+          }
+        }).catch(function () {});
+      } catch (e) {}
+    })();
+    </script>
+
+    <!-- Needed for the first paint -->
+    <link rel="stylesheet" href="./Css/home.css">
+    <link rel="stylesheet" href="./Css/scrollbar.css">
+    <link rel="stylesheet" href="./Css/nav-links.css">
+
+    <!-- Not needed for the first paint: loaded without blocking it (swapped in as soon as they arrive) -->
+    <link rel="stylesheet" href="./Css/modal.css" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="./Css/modal.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    </noscript>
 </head>
 <body>
     <header class="site-header" id="page-top">
@@ -295,14 +335,28 @@
 
 <script src="./Js/title-lang.js"></script>
 <script src="./Js/navbar.js"></script>
-<script src="./Js/modal.js"></script>
 <script src="./Js/spotlight.js"></script>
 <script src="./Js/topanime.js"></script>
 <script src="./Js/upcoming.js"></script>
 <script src="./Js/rows.js"></script>
-<script src="./Js/search.js"></script>
 <script src="./Js/slidebar.js"></script>
-<script src="./Js/ai-assistant.js"></script>
+<script>
+/* Parts that nobody needs in the first second (details popup, search, AI assistant) load
+   once the page is drawn, one after the other, so they never compete with the first view. */
+(function () {
+  var later = ["modal", "search", "ai-assistant"];
+  function load() {
+    later.forEach(function (name) {
+      var s = document.createElement("script");
+      s.src = "./Js/" + name + ".js";
+      s.async = false;                 // keep this order
+      document.body.appendChild(s);
+    });
+  }
+  function go() { (window.requestIdleCallback || function (f) { setTimeout(f, 200); })(load, { timeout: 2000 }); }
+  if (document.readyState === "complete") go(); else window.addEventListener("load", go, { once: true });
+})();
+</script>
 <!-- ==========================================================================
      HUGANIME WELCOME AUDIO  (visit 1, 3 and 5 only)
      PASTE THIS WHOLE BLOCK in Public/home.html, right BEFORE the closing

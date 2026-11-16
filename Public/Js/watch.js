@@ -6,6 +6,7 @@ import { saveWatchHistoryEntry, getWatchHistory } from "./features/history.js";
 import { checkAvailability, lookupEpisodeId } from "./server-check.js";
 import { buildEmbedUrl } from "./servers.js";
 import { createAutoSkipper, seekMessages, readPlayerTime } from "./autoskip.js";
+import { MERGED_SEASONS, PART_TO_MAIN } from "./merged-seasons.js";
 
 const SERVER_LIST = [
   { id: "s2", label: "VidStream-1" },
@@ -47,6 +48,7 @@ export const state = {
   anime: null,
   mal: null,
   episodeTitles: new Map(),
+  episodeDetails: new Map(),   // episode number -> { title, synopsis, thumb, aired }  (from Kitsu, see loadEpisodeDetails)
   rangeStart: 1
 };
 
@@ -156,11 +158,27 @@ function showNote(text, href) {
   els.note.hidden = !text;
 }
 
+// ---- merged seasons (see merged-seasons.js): one page, one episode list, several AniList entries behind it ----
+const mergedParts = () => MERGED_SEASONS[state.animeId]?.parts || null;
+
+// Which AniList / MAL entry an episode of this page belongs to, and its number inside that entry.
+function partFor(episode) {
+  const parts = mergedParts();
+  if (!parts) return { animeId: state.animeId, malId: state.malId, episode, offset: 0 };
+  let offset = 0;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (episode <= offset + part.episodes || i === parts.length - 1) return { animeId: part.id, malId: part.malId, episode: episode - offset, offset };
+    offset += part.episodes;
+  }
+}
+
 // /s2-debug page for the current anime + episode (shows how the server matched, or failed to match, it on Anikoto)
 function s2DebugUrl() {
   const a = state.anime;
-  const query = new URLSearchParams({ animeId: state.animeId, episode: state.currentEpisode });
-  if (state.malId) query.set("malId", state.malId);
+  const part = partFor(state.currentEpisode);
+  const query = new URLSearchParams({ animeId: part.animeId, episode: part.episode });
+  if (part.malId) query.set("malId", part.malId);
   for (const title of [a?.title?.english, a?.title?.romaji, a?.title?.native, ...(a?.synonyms || [])]) {
     if (title) query.append("title", title);
   }
@@ -180,21 +198,41 @@ function teardownPlayer() {
 let playbackRun = 0;
 
 // MegaPlay's episode id for the current anime + episode (null = the lookup service isn't reachable)
-function episodeInfo() {
+async function episodeInfo() {
   const a = state.anime;
   const titles = [a?.title?.english, a?.title?.romaji, a?.title?.native, ...(a?.synonyms || [])];
-  return lookupEpisodeId({ animeId: state.animeId, malId: state.malId, episode: state.currentEpisode, titles });
+  const current = state.currentEpisode;
+  const part = partFor(current);
+  const ask = (animeId, malId, episode) => lookupEpisodeId({ animeId, malId, episode, titles });
+  if (!part.offset) return ask(part.animeId, part.malId, part.episode);
+
+  // A later part of a merged season. Anikoto may list it as its own series (episode 1-10) OR as one series for the
+  // whole season (episode 1-22), so try the season-wide number first: asking for "episode 1" of a whole-season
+  // series would play the season's first episode instead of this part's first.
+  const tries = [
+    [part.animeId, part.malId, current],
+    [part.animeId, part.malId, part.episode],
+    [state.animeId, state.malId, current]
+  ];
+  let first = null;
+  for (const [animeId, malId, episode] of tries) {
+    const info = await ask(animeId, malId, episode).catch(() => null);
+    first = first || info;
+    if (info?.episodeId) return info;
+  }
+  return first;
 }
 
 async function startPlayback() {
   const run = ++playbackRun;
   const a = state.anime;
+  const part = partFor(state.currentEpisode);
   const ctx = {
     server: state.activeServer,
     language: state.language,
-    animeId: state.animeId,
-    malId: state.malId || "",
-    episode: state.currentEpisode,
+    animeId: part.animeId,
+    malId: part.malId || "",
+    episode: part.episode,
     autoSkip: prefs.autoSkip ? 1 : 0,
     autoplay: 1
   };
@@ -235,7 +273,13 @@ async function startPlayback() {
   }
 
   const frame = document.createElement("iframe");
+  // every server's player uses the same embed:
+  //   <iframe src="" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen></iframe>
   frame.src = src;
+  frame.setAttribute("width", "100%");
+  frame.setAttribute("height", "100%");
+  frame.setAttribute("frameborder", "0");
+  frame.setAttribute("scrolling", "no");
   frame.title = `${a?.displayTitle || "Anime"} - Episode ${state.currentEpisode}`;
   // For gosh sake wag mong galawin 'to Rai
   frame.referrerPolicy = "origin";
@@ -273,6 +317,55 @@ export function recordProgress() {
   });
 }
 
+// Address of an anime: /watch.html/love-chunibyo-and-other-delusions-take-on-me/ep-1   (no id in it; server.js serves the page for it).
+// The title words are turned back into the anime by searching AniList; the answer is remembered in this browser
+// (SLUG_KEY) so the same address opens instantly and always lands on the same anime.
+const SLUG_KEY = "huganime_slug_ids";
+
+function slugify(text) {
+  return String(text || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80)
+    .replace(/-+$/g, "");
+}
+const slugOf = (anime) => slugify(anime?.title?.english || anime?.title?.romaji);
+
+function rememberSlug(slug, id) {
+  if (!slug || !id) return;
+  const map = readJson(SLUG_KEY, {});
+  if (map[slug] === id) return;
+  map[slug] = id;
+  const keys = Object.keys(map);
+  for (const key of keys.slice(0, Math.max(0, keys.length - 500))) delete map[key];   // keep the list small
+  writeJson(SLUG_KEY, map);
+}
+
+// title words -> AniList id (0 = not found)
+async function resolveSlug(slug) {
+  const known = Number(readJson(SLUG_KEY, {})[slug]);
+  if (known) return known;
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      query: "query ($s: String) { Page(perPage: 15) { media(search: $s, type: ANIME, sort: SEARCH_MATCH) { id title { romaji english } synonyms } } }",
+      variables: { s: slug.replace(/-/g, " ") }
+    })
+  });
+  if (!response.ok) throw new Error(`Request failed (${response.status})`);
+  const list = (await response.json())?.data?.Page?.media || [];
+  const exact = list.find((m) => slugify(m.title?.english) === slug || slugify(m.title?.romaji) === slug)
+    || list.find((m) => (m.synonyms || []).some((name) => slugify(name) === slug));
+  const hit = exact || list[0];
+  if (hit) rememberSlug(slug, hit.id);
+  return hit ? hit.id : 0;
+}
+
 export function goToEpisode(n, { autostart = false } = {}) {
   let ep = Math.floor(Number(n));
   if (!Number.isFinite(ep) || ep < 1) ep = 1;
@@ -284,8 +377,16 @@ export function goToEpisode(n, { autostart = false } = {}) {
   renderServers();
 
   const url = new URL(window.location.href);
-  url.searchParams.set("id", state.animeId);
-  url.searchParams.set("ep", ep);
+  const slug = slugOf(state.anime);
+  if (slug) {
+    rememberSlug(slug, state.animeId);
+    url.pathname = `/watch.html/${slug}/ep-${ep}`;
+    url.search = "";
+  } else {                       // no usable title yet: fall back to the id
+    url.pathname = "/watch.html";
+    url.searchParams.set("id", state.animeId);
+    url.searchParams.set("ep", ep);
+  }
   window.history.replaceState(null, "", url);
 
   syncEpisodeUI();
@@ -336,9 +437,10 @@ const autoSkipper = createAutoSkipper({
 });
 
 function armAutoSkip(server) {
-  if (!prefs.autoSkip || !SKIP_SERVERS.has(server) || !state.malId) { autoSkipper.stop(); return; }
-  const malId = state.malId;
-  const episode = state.currentEpisode;
+  const part = partFor(state.currentEpisode);
+  if (!prefs.autoSkip || !SKIP_SERVERS.has(server) || !part.malId) { autoSkipper.stop(); return; }
+  const malId = part.malId;
+  const episode = part.episode;
   autoSkipper.start(server, () => fetchSkipTimes(malId, episode));
 }
 
@@ -356,15 +458,16 @@ window.addEventListener("message", (event) => {
 });
 
 
-// A server is shown ONLY when its check confirmed it has this episode (true).
-// "false" (no episode) and "null" (couldn't tell) are both hidden, and so is everything until the check finishes.
-// One exception: if the check could not run at all (every answer is null, e.g. the backend is down) we can't know
-// anything, so all servers stay visible rather than leaving the viewer with nothing to click.
+// A server is shown when its check CONFIRMED it has this episode (true); servers that answered "no" (false) are hidden,
+// and so are servers that could not be checked (null) -- as long as at least one server is confirmed.
+// If NOTHING could be confirmed (e.g. HD-1 can't be probed and the Anikoto list doesn't have this anime), every server
+// that is not known to be missing stays visible, so the viewer can still try them instead of seeing an empty list.
 function serverUsable(serverId, language) {
   if (!state.checked) return false;
   const values = Object.values(state.availability);
-  if (values.length && values.every((v) => v === null || v === undefined)) return true;
-  return state.availability[`${serverId}:${language}`] === true;
+  const answer = state.availability[`${serverId}:${language}`];
+  if (!values.some((v) => v === true)) return answer !== false;
+  return answer === true;
 }
 
 function renderServers() {
@@ -416,7 +519,7 @@ async function refreshAvailability() {
   const episode = state.currentEpisode;
 
   const [checked, info] = await Promise.all([
-    checkAvailability({ animeId: state.animeId, malId: state.malId, episode }).catch(() => null),
+    (() => { const part = partFor(episode); return checkAvailability({ animeId: part.animeId, malId: part.malId, episode: part.episode }); })().catch(() => null),
     episodeInfo().catch(() => null)
   ]);
   if (run !== availabilityRun || episode !== state.currentEpisode) return; // user moved on
@@ -514,14 +617,41 @@ function renderRangeOptions() {
   els.range.value = String(state.rangeStart);
 }
 
+function formatAired(value) {
+  const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value || "") ? `${value}T00:00:00` : value);
+  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+}
+
 function episodeButton(n) {
-  const title = state.episodeTitles.get(n);
+  const detail = state.episodeDetails.get(n) || {};
+  const title = detail.title || state.episodeTitles.get(n);
   const btn = el("button", "ep");
   btn.type = "button";
   btn.dataset.ep = String(n);
-  btn.append(el("span", "ep_num", String(n)));
-  if (title) {
-    btn.append(el("span", "ep_sep", "-"), el("span", "ep_title", title));
+
+  if (prefs.compact) {
+    btn.append(el("span", "ep_num", String(n)));            // numbers-only view
+  } else {
+    // card: picture + "EP n" badge, title, short description, air date
+    btn.classList.add("ep--rich");
+    const thumb = el("span", "ep_thumb");
+    const picture = safeUrl(detail.thumb) || safeUrl(state.anime?.coverMedium || state.anime?.cover);
+    if (picture) {
+      const img = el("img");
+      img.src = picture;
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      if (!detail.thumb) thumb.classList.add("ep_thumb--cover");   // no episode picture: the anime's cover stands in
+      thumb.append(img);
+    }
+    thumb.append(el("span", "ep_badge", `EP ${n}`));
+    const body = el("span", "ep_body");
+    body.append(el("span", "ep_name", title || `Episode ${n}`));
+    if (detail.synopsis) body.append(el("span", "ep_desc", detail.synopsis));
+    const aired = formatAired(detail.aired);
+    if (aired) body.append(el("span", "ep_date", aired));
+    btn.append(thumb, body);
   }
   const label = title ? `Episode ${n} - ${title}` : `Episode ${n}`;
   btn.title = label;
@@ -546,6 +676,7 @@ function renderEpisodes() {
 
   els.grid.classList.toggle("ep-grid--compact", prefs.compact);
   els.grid.replaceChildren(...numbers.map(episodeButton));
+  if (!prefs.compact) loadEpisodeDetails(numbers);
 
   els.empty.hidden = numbers.length > 0;
   els.empty.textContent = total ? "No episodes match." : "Episodes aren't available yet.";
@@ -590,16 +721,91 @@ async function fetchJikan(path) {
   throw new Error("Jikan rate limited");
 }
 
-function applyTitles(entries) {
-  for (const [ep, title] of entries) state.episodeTitles.set(Number(ep), title);
+function applyTitles(entries, offset = 0) {
+  for (const [ep, title] of entries) state.episodeTitles.set(Number(ep) + offset, title);
   renderEpisodes();
 }
 
-async function loadEpisodeTitles(malId) {
+// ---- episode pictures, titles and descriptions (Kitsu: free, no key). MAL id -> Kitsu anime -> its episodes, 20 per page.
+// Only the pages for the episodes on screen are fetched; every page is fetched once.
+const KITSU = "https://kitsu.io/api/edge";
+const kitsuIds = new Map();          // malId -> Promise<kitsu id>
+const kitsuPagesDone = new Set();    // "<kitsuId>:<page>"
+
+function kitsuId(malId) {
+  if (kitsuIds.has(malId)) return kitsuIds.get(malId);
+  const cacheKey = `kitsu_id_${malId}`;
+  const cached = persistentCache.get(cacheKey);
+  const promise = cached?.data
+    ? Promise.resolve(String(cached.data))
+    : fetch(`${KITSU}/mappings?filter[externalSite]=myanimelist/anime&filter[externalId]=${encodeURIComponent(malId)}&include=item`, { headers: { Accept: "application/vnd.api+json" } })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          const id = json?.included?.[0]?.id || json?.data?.[0]?.relationships?.item?.data?.id || "";
+          if (id) persistentCache.set(cacheKey, String(id));
+          else kitsuIds.delete(malId);                   // no answer: ask again next time
+          return String(id || "");
+        })
+        .catch(() => { kitsuIds.delete(malId); return ""; });
+  kitsuIds.set(malId, promise);
+  return promise;
+}
+
+// numbers = episode numbers on this page; a merged season is split into its parts, each asked about with its own MAL id
+async function loadEpisodeDetails(numbers) {
+  if (!state.malId || !numbers.length) return;
+  const groups = new Map();
+  for (const n of numbers) {
+    const part = partFor(n);
+    if (!part.malId) continue;
+    if (!groups.has(part.malId)) groups.set(part.malId, { part, locals: [] });
+    groups.get(part.malId).locals.push(part.episode);
+  }
+  for (const { part, locals } of groups.values()) await loadPartDetails(part, locals);
+}
+
+async function loadPartDetails(part, locals) {
+  const animeId = state.animeId;
+  const id = await kitsuId(part.malId);
+  if (!id || animeId !== state.animeId) return;
+
+  const first = Math.floor((Math.min(...locals) - 1) / 20);
+  const last = Math.floor((Math.max(...locals) - 1) / 20);
+  let changed = false;
+  for (let page = first; page <= last; page++) {
+    const key = `${id}:${page}`;
+    if (kitsuPagesDone.has(key)) continue;
+    kitsuPagesDone.add(key);                           // marked first, so renderEpisodes() below can't start it twice
+    try {
+      const res = await fetch(`${KITSU}/anime/${id}/episodes?page[limit]=20&page[offset]=${page * 20}&sort=number`, { headers: { Accept: "application/vnd.api+json" } });
+      if (!res.ok) throw new Error("Kitsu HTTP " + res.status);
+      const json = await res.json();
+      for (const item of json.data || []) {
+        const a = item.attributes || {};
+        const n = Number(a.number);
+        if (!n) continue;
+        const thumb = a.thumbnail?.large || a.thumbnail?.original || a.thumbnail?.medium || "";
+        const synopsis = String(a.synopsis || "").replace(/\s*\(Source:[^)]*\)\s*$/i, "").replace(/\s+/g, " ").trim();
+        state.episodeDetails.set(n + part.offset, { title: a.titles?.en_us || a.titles?.en_jp || a.canonicalTitle || "", synopsis, thumb, aired: a.airdate || "" });
+        changed = true;
+      }
+    } catch (error) {
+      kitsuPagesDone.delete(key);                      // try again the next time this part of the list is shown
+      console.warn("Could not load episode details:", error);
+      break;
+    }
+  }
+  if (changed && animeId === state.animeId) {
+    // refresh the cards without restarting the loader
+    els.grid.replaceChildren(...[...els.grid.children].map((node) => episodeButton(Number(node.dataset.ep))));
+  }
+}
+
+async function loadEpisodeTitles(malId, offset = 0) {   // offset = episodes of the earlier parts of a merged season
   const key = `jikan_episodes_${malId}`;
   const cached = persistentCache.get(key);
   if (cached?.data) {
-    applyTitles(Object.entries(cached.data));
+    applyTitles(Object.entries(cached.data), offset);
     if (Date.now() - cached.savedAt < 6 * 3600 * 1000) return;
   }
 
@@ -611,7 +817,7 @@ async function loadEpisodeTitles(malId) {
         const n = Number(ep.mal_id);
         if (n && ep.title) collected[n] = ep.title;
       }
-      applyTitles(Object.entries(collected));
+      applyTitles(Object.entries(collected), offset);
       if (!json.pagination?.has_next_page) break;
     }
     if (Object.keys(collected).length) persistentCache.set(key, collected);
@@ -881,7 +1087,7 @@ const SIDE_PREVIEW = 5;
 
 function sideCard(item, showRelation) {
   const link = el("a", "rel-card");
-  link.href = `watch.html?id=${encodeURIComponent(item.id)}&ep=1`;
+  link.href = `/watch.html?id=${encodeURIComponent(item.id)}&ep=1`;
 
   const img = el("img", "rel-card_img");
   img.alt = "";
@@ -936,6 +1142,19 @@ function onAnime(anime) {
   const first = !state.anime;
   const previousTotal = state.totalEpisodes;
 
+  // a merged season (merged-seasons.js): all parts count as one anime with one episode list
+  if (MERGED_SEASONS[anime.id]) {
+    const parts = MERGED_SEASONS[anime.id].parts;
+    const total = parts.reduce((sum, part) => sum + part.episodes, 0);
+    anime = {
+      ...anime,
+      episodes: total,
+      availableEpisodes: total,
+      related: (anime.related || []).filter((item) => !parts.some((part) => part.id === item.id)),
+      recommendations: (anime.recommendations || []).filter((item) => !PART_TO_MAIN[item.id])
+    };
+  }
+
   // details can come from cache: always pick the title in the language chosen right now
   for (const item of [anime, ...(anime.recommendations || []), ...(anime.relations || []), ...(anime.related || [])]) {
     if (item && item.title && typeof item.title === "object") item.displayTitle = window.HugTitle.pick(item.title);
@@ -955,7 +1174,11 @@ function onAnime(anime) {
   if (first) {
     goToEpisode(state.currentEpisode);
     if (state.malId) {
-      loadEpisodeTitles(state.malId);
+      let offset = 0;
+      for (const part of mergedParts() || [{ malId: state.malId, episodes: 0 }]) {
+        if (part.malId) loadEpisodeTitles(part.malId, offset);
+        offset += part.episodes;
+      }
       loadMalDetails(state.malId);
     }
   } else if (state.totalEpisodes !== previousTotal) {
@@ -965,8 +1188,12 @@ function onAnime(anime) {
 
 async function init() {
   const params = new URLSearchParams(window.location.search);
+  // /watch.html/some-title/ep-3   (or the old watch.html?id=98762&ep=3, which is rewritten to the title form once loaded)
+  const wanted = /\/watch\.html\/([^/]+)(?:\/ep-(\d+))?\/?$/.exec(window.location.pathname);
+  let slug = "";
+  try { slug = slugify(decodeURIComponent(wanted?.[1] || "")); } catch { /* bad address: treated as no anime */ }
   state.animeId = Number(params.get("id")) || 0;
-  state.currentEpisode = Math.max(1, Math.floor(Number(params.get("ep"))) || 1);
+  state.currentEpisode = Math.max(1, Math.floor(Number(wanted?.[2] || params.get("ep"))) || 1);
   state.rangeStart = Math.floor((state.currentEpisode - 1) / RANGE_SIZE) * RANGE_SIZE + 1;
 
   restoreServer();
@@ -976,8 +1203,27 @@ async function init() {
   paintToggles();
   bindControls();
 
+  if (!state.animeId && slug) {
+    els.title.textContent = "Finding the anime...";
+    try { state.animeId = await resolveSlug(slug); } catch (error) { reportUiError("watch", error); }
+  }
+
+  // the address names a later part of a merged season: show the merged page at that part's episode
+  const mainId = PART_TO_MAIN[state.animeId];
+  if (mainId) {
+    let offset = 0;
+    for (const part of MERGED_SEASONS[mainId].parts) {
+      if (part.id === state.animeId) break;
+      offset += part.episodes;
+    }
+    state.animeId = mainId;
+    state.currentEpisode += offset;
+    state.rangeStart = Math.floor((state.currentEpisode - 1) / RANGE_SIZE) * RANGE_SIZE + 1;
+  }
+
   if (!state.animeId) {
-    els.error.textContent = "No anime selected. Open one from the home page.";
+    els.title.textContent = "";
+    els.error.textContent = slug ? "Couldn't find that anime. Search for it on the home page." : "No anime selected. Open one from the home page.";
     els.error.hidden = false;
     return;
   }

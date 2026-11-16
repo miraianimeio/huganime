@@ -45,7 +45,7 @@ function progressPercent(entry) {
 function renderHistoryRow(entry) {
   const poster = safeUrl(entry.poster) || "assets/logo.png";
   const title = entry.title || "Unknown Anime";
-  const href = `watch.html?id=${encodeURIComponent(entry.id)}&ep=${encodeURIComponent(entry.episode)}`;
+  const href = `/watch.html?id=${encodeURIComponent(entry.id)}&ep=${encodeURIComponent(entry.episode)}`;
 
   return html`
     <div class="history-row" data-history-id="${entry.id}">
@@ -72,7 +72,7 @@ function renderHistoryRow(entry) {
 function renderContinueWatchingCard(entry) {
   const poster = safeUrl(entry.poster) || "assets/logo.png";
   const title = entry.title || "Unknown Anime";
-  const href = `watch.html?id=${encodeURIComponent(entry.id)}&ep=${encodeURIComponent(entry.episode)}`;
+  const href = `/watch.html?id=${encodeURIComponent(entry.id)}&ep=${encodeURIComponent(entry.episode)}`;
 
   return html`
     <div class="anime-card cw-card" data-history-id="${entry.id}">

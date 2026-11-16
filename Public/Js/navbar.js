@@ -219,7 +219,7 @@
     icon?.classList.add("fa-beat-fade");
     try {
       const id = await pickRandomAnimeId();
-      window.location.href = "watch.html?id=" + encodeURIComponent(id) + "&ep=1";
+      window.location.href = "/watch.html?id=" + encodeURIComponent(id) + "&ep=1";
     } catch {
       randomBtn.disabled = false;
       icon?.classList.remove("fa-beat-fade");

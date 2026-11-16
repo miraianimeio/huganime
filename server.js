@@ -207,7 +207,8 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(405);
       return res.end("Method not allowed");
     }
-    await serveFile(url.pathname, req, res);
+    // /watch.html/the-anime-title/ep-1 is the watch page (watch.js reads the title and episode from the address)
+    await serveFile(/^\/watch\.html\/.+/.test(url.pathname) ? "/watch.html" : url.pathname, req, res);
   } catch (error) {
     console.error(error);
     if (!res.headersSent) res.writeHead(500);

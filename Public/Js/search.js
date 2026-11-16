@@ -139,7 +139,7 @@
   }
 
   // A result opens HugAnime's own watch page (watch.html reads ?id= = the AniList id, and ?ep=), not AniList.
-  const watchUrl = (card) => `watch.html?id=${encodeURIComponent(card.id)}&ep=1`;
+  const watchUrl = (card) => `/watch.html?id=${encodeURIComponent(card.id)}&ep=1`;
 
   function choose(card) {
     const url = watchUrl(card);
@@ -258,7 +258,7 @@
       e.preventDefault();
       clearTimeout(timer);
       const q = input.value.trim();
-      if (q) window.location.href = "all-anime-index.html?keyword=" + encodeURIComponent(q);
+      if (q) window.location.href = "/all-anime-index.html?keyword=" + encodeURIComponent(q);
     } else if (e.key === "Escape") {
       closePanel();
       input.blur();

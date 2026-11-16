@@ -160,10 +160,10 @@
   }
 
   // "Watch Now" target: our own player page. Relative, so it works from any folder, any server
-  // root and file://. watch.html reads ?id= (AniList id) and ?ep=. Override if you need to:
-  //   HugModal.watchUrl = (anime) => "watch.html?id=" + anime.id;
+  // root and file://. /watch reads ?id= (AniList id) and ?ep=. Override if you need to:
+  //   HugModal.watchUrl = (anime) => "/watch?id=" + anime.id;
   function defaultWatchUrl(a) {
-    return "watch.html?id=" + encodeURIComponent(a.id) + "&ep=1";
+    return "/watch?id=" + encodeURIComponent(a.id) + "&ep=1";
   }
 
   // ---------- markup ----------

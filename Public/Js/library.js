@@ -98,7 +98,7 @@
   // title in the language chosen with the EN / JP switch
   const titleOf = (entry) => (entry.titles && window.HugTitle.pick(entry.titles)) || entry.title || "Unknown anime";
 
-  const watchHref = (id, ep) => `watch.html?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}`;
+  const watchHref = (id, ep) => `/watch?id=${encodeURIComponent(id)}&ep=${encodeURIComponent(ep)}`;
 
   /* ---------- cards ---------- */
 

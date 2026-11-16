@@ -159,7 +159,7 @@
 
     const watch = el("a", "spotlight_btn");
     // Spotlight goes straight to the watch page (same tab), episode 1. No details modal here.
-    watch.href = `watch.html?id=${encodeURIComponent(a.id)}&ep=1`;
+    watch.href = `/watch?id=${encodeURIComponent(a.id)}&ep=1`;
     watch.innerHTML = icon("play");
     watch.append("Watch now");
     content.appendChild(watch);

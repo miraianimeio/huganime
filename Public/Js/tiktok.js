@@ -91,7 +91,7 @@
     const avatarUrl = safeUrl(v.avatar);
     const avatar = avatarUrl ? `<img src="${esc(avatarUrl)}" alt="" loading="lazy" decoding="async">` : esc((v.user || "?").charAt(0));
     const watch = v.anime?.id
-      ? `<a class="tt-watch" href="watch.html?id=${encodeURIComponent(v.anime.id)}&amp;ep=1">${I.play} Watch full anime</a>`
+      ? `<a class="tt-watch" href="/watch?id=${encodeURIComponent(v.anime.id)}&amp;ep=1">${I.play} Watch full anime</a>`
       : "";
 
     el.innerHTML = `
@@ -162,7 +162,7 @@
     }, { root: feed, threshold: [0.6] });
     items.forEach((it) => observer.observe(it.el));
 
-    // opened from a shared link (tiktok.html#clip-003)?
+    // opened from a shared link (/tiktok#clip-003)?
     const wanted = decodeURIComponent(location.hash.slice(1));
     const at = items.findIndex((it) => it.data.id === wanted);
     if (at > 0) feed.scrollTop = at * feed.clientHeight;

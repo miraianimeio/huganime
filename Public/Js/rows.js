@@ -275,7 +275,7 @@
     const episode = Math.floor(Number(entry.episode));
 
     const link = el("a", "anime-card_link");
-    link.href = "watch.html?id=" + encodeURIComponent(entry.id) + "&ep=" + encodeURIComponent(episode);
+    link.href = "/watch?id=" + encodeURIComponent(entry.id) + "&ep=" + encodeURIComponent(episode);
     link.title = title + " - continue from episode " + episode;
 
     const poster = el("div", "anime-card_poster");

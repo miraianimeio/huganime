@@ -340,7 +340,7 @@
     const row = el("div", "sch_row");
     const name = el("h2", "sch_name");
     const link = el("a", "", (item.titles && window.HugTitle.pick(item.titles)) || item.title);
-    link.href = `watch.html?id=${encodeURIComponent(item.id)}&ep=${encodeURIComponent(item.episode)}`;
+    link.href = `/watch?id=${encodeURIComponent(item.id)}&ep=${encodeURIComponent(item.episode)}`;
     name.append(link);
 
     const cd = countdown(item.at, now);

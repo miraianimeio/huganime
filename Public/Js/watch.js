@@ -317,7 +317,7 @@ export function recordProgress() {
   });
 }
 
-// Address of an anime: /watch.html/love-chunibyo-and-other-delusions-take-on-me/ep-1   (no id in it; server.js serves the page for it).
+// Address of an anime: /watch/love-chunibyo-and-other-delusions-take-on-me/ep-1   (no id in it; server.js serves the page for it).
 // The title words are turned back into the anime by searching AniList; the answer is remembered in this browser
 // (SLUG_KEY) so the same address opens instantly and always lands on the same anime.
 const SLUG_KEY = "huganime_slug_ids";
@@ -380,10 +380,10 @@ export function goToEpisode(n, { autostart = false } = {}) {
   const slug = slugOf(state.anime);
   if (slug) {
     rememberSlug(slug, state.animeId);
-    url.pathname = `/watch.html/${slug}/ep-${ep}`;
+    url.pathname = `/watch/${slug}/ep-${ep}`;
     url.search = "";
   } else {                       // no usable title yet: fall back to the id
-    url.pathname = "/watch.html";
+    url.pathname = "/watch";
     url.searchParams.set("id", state.animeId);
     url.searchParams.set("ep", ep);
   }
@@ -1087,7 +1087,7 @@ const SIDE_PREVIEW = 5;
 
 function sideCard(item, showRelation) {
   const link = el("a", "rel-card");
-  link.href = `/watch.html?id=${encodeURIComponent(item.id)}&ep=1`;
+  link.href = `/watch?id=${encodeURIComponent(item.id)}&ep=1`;
 
   const img = el("img", "rel-card_img");
   img.alt = "";
@@ -1188,8 +1188,8 @@ function onAnime(anime) {
 
 async function init() {
   const params = new URLSearchParams(window.location.search);
-  // /watch.html/some-title/ep-3   (or the old watch.html?id=98762&ep=3, which is rewritten to the title form once loaded)
-  const wanted = /\/watch\.html\/([^/]+)(?:\/ep-(\d+))?\/?$/.exec(window.location.pathname);
+  // /watch/some-title/ep-3   (or the old /watch?id=98762&ep=3, which is rewritten to the title form once loaded)
+  const wanted = /\/watch(?:\.html)?\/([^/]+)(?:\/ep-(\d+))?\/?$/.exec(window.location.pathname);
   let slug = "";
   try { slug = slugify(decodeURIComponent(wanted?.[1] || "")); } catch { /* bad address: treated as no anime */ }
   state.animeId = Number(params.get("id")) || 0;

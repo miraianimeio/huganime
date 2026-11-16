@@ -1,4 +1,4 @@
-// Comments block for watch.html (Anime / Episode tabs + "Load comments").
+// Comments block for /watch (Anime / Episode tabs + "Load comments").
 // Comments are saved in this browser only (localStorage). To make them public later,
 // replace load()/save() with calls to your own backend.
 const KEY = "huganime-comments";

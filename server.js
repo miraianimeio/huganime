@@ -1,5 +1,5 @@
 // HugAnime local server: `npm start` serves the site AND the "is this server available?" check.
-//   site:   http://localhost:3000/            (redirects to /home.html)
+//   site:   http://localhost:3000/            (redirects to /home; pages have clean URLs: /home, /schedule, /watch/title/ep-1 ...)
 //   S-2:    GET /s2-episode?animeId=21&malId=21&episode=5&title=One+Piece   -> MegaPlay episode id (see anikoto.js)
 //           GET /s2-debug?animeId=...&title=...                            -> why a title did / didn't resolve
 //   skip:   GET /skip-times?malId=21&episode=5                             -> opening / ending times for Auto Skip (see aniskip.js)
@@ -26,6 +26,9 @@ const checkCache = new Map();
 
 // only these folders are public; server.js, package.json etc. are never served
 const PUBLIC_DIRS = ["Public", "Assets"];
+
+// pages with clean URLs (no .html): /home, /my-list, /recent, /schedule, /tiktok, /filter, /all-anime-index, /watch
+const PAGES = new Set(["home", "my-list", "recent", "schedule", "tiktok", "filter", "all-anime-index", "watch"]);
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -200,15 +203,24 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/s2-debug") return await s2Episode(url, res, true);
     if (url.pathname === "/skip-times") return await skipTimes(url, res);
     if (url.pathname === "/") {
-      res.writeHead(302, { Location: "/home.html" });
+      res.writeHead(302, { Location: "/home" });
       return res.end();
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
       res.writeHead(405);
       return res.end("Method not allowed");
     }
-    // /watch.html/the-anime-title/ep-1 is the watch page (watch.js reads the title and episode from the address)
-    await serveFile(/^\/watch\.html\/.+/.test(url.pathname) ? "/watch.html" : url.pathname, req, res);
+    // old addresses with .html -> clean ones (301):  /home.html -> /home,  /watch.html/title/ep-1 -> /watch/title/ep-1
+    const legacy = /^\/([\w-]+)\.html(\/.*)?$/.exec(url.pathname);
+    if (legacy && PAGES.has(legacy[1])) {
+      res.writeHead(301, { Location: `/${legacy[1]}${legacy[2] || ""}${url.search}` });
+      return res.end();
+    }
+    // clean addresses -> the page file:  /home -> Public/home.html,  /watch/the-anime-title/ep-1 -> Public/watch.html
+    // (watch.js reads the title and episode from the address)
+    const [, first, rest] = /^\/([\w-]+)(\/.*)?$/.exec(url.pathname) || [];
+    if (PAGES.has(first) && (first === "watch" || !rest)) return await serveFile(`/${first}.html`, req, res);
+    await serveFile(url.pathname, req, res);
   } catch (error) {
     console.error(error);
     if (!res.headersSent) res.writeHead(500);

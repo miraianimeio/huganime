@@ -18,9 +18,7 @@
   z-index: 5;
   top: 0;
   border-bottom: 1px solid rgb(255 255 255 / 7%);
-  background: rgb(24 24 24 / 78%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgb(24 24 24 / 96%);
 }
 
 .nav-container {
@@ -112,7 +110,7 @@
   display: flex;
   width: 100%;
   max-width: 460px;
-  height: 50px;
+  height: 38px;
   flex: 1 1 320px;
   align-items: center;
   gap: 12px;
@@ -134,7 +132,7 @@
 
 .search-icon {
   color: #77777c;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
 }
 
 .nav-search input {
@@ -164,16 +162,16 @@
 .nav-search > kbd {
   position: relative;
   display: inline-grid;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   place-items: center;
   border: 2px solid rgb(139 151 163 / 70%);
   border-radius: 8px;
   color: #9aa6b3;
   background: transparent;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -820,7 +818,7 @@
   }
 
   .nav-search {
-    height: 44px;
+    height: 38px;
     flex-basis: 180px;
     margin-left: 4px;
     gap: 8px;
@@ -895,7 +893,7 @@
     display: none;
     width: auto;
     max-width: none;
-    height: 46px;
+    height: 40px;
     flex: 0 1 auto;
     order: initial;
     margin: 0;

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/Css/scrollbar.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var d=document.documentElement;if(d.dataset.theme==="custom"){var o=JSON.parse(localStorage.getItem("huganime-custom-theme")||"null");if(o){var k,n,s=d.style,l=document.querySelector('link[href$="nav-links.css"]');for(k in o.vars)s.setProperty(k,o.vars[k]);for(k in o.attrs)d.setAttribute(k,o.attrs[k]);if(l){n=document.createElement("link");n.rel="stylesheet";n.setAttribute("blocking","render");n.href=l.href.replace("nav-links.css","custom-theme.css");document.head.appendChild(n)}if(o.fontUrl){n=document.createElement("link");n.rel="stylesheet";n.id="ct-font";n.href=o.fontUrl;document.head.appendChild(n)}}}}catch(e){}</script>
 </head>
 <body>
   <div class="lights" id="lights" hidden></div>
@@ -132,7 +133,7 @@
               <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Blue" title="Blue" data-theme-choice="blue"><span class="theme-dot"></span></button>
               <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Pink" title="Pink" data-theme-choice="pink"><span class="theme-dot"></span></button>
               <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Red" title="Red" data-theme-choice="red"><span class="theme-dot"></span></button>
-              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Multicolor (default)" title="Multicolor (default)" data-theme-choice="multi"><span class="theme-dot"></span></button>
+              <button class="theme-swatch" type="button" role="radio" aria-checked="false" aria-label="Custom theme" title="Custom theme" data-theme-choice="multi"><span class="theme-dot"></span></button>
             </div>
 
             <h2 class="nav-drawer-label" id="lang-label">Language</h2>

@@ -128,3 +128,24 @@
   .nav-links .random-manga { display: grid !important; }
   .nav-drawer-link--mobile { display: flex; }
 }
+
+/* hamburger: a visible rounded button so the menu is easy to spot on every page */
+.nav-icon-button.menu-toggle {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: 1px solid rgb(var(--accent-rgb) / 38%);
+  border-radius: 12px;
+  color: #fff;
+  background: rgb(var(--accent-rgb) / 14%);
+  font-size: 1.15rem;
+}
+
+.nav-icon-button.menu-toggle:hover,
+.nav-icon-button.menu-toggle:focus-visible {
+  border-color: rgb(var(--accent-rgb) / 65%);
+  color: #fff;
+  background: rgb(var(--accent-rgb) / 26%);
+}
+
+.nav-icon-button.menu-toggle:active { transform: scale(0.95); }

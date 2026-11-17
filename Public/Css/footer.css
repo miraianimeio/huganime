@@ -1,0 +1,223 @@
+/* =====================================================
+   HugAnime footer: logo + Join now, help links,
+   copyright and disclaimer over the Frieren background
+   ===================================================== */
+.hug-footer {
+  /* every colour below comes from the active theme: --accent is switched by the side-menu swatches */
+  --hf-accent: var(--accent, #4ed9ff);
+  --hf-bg: color-mix(in srgb, var(--hf-accent) 9%, #0a0d12);
+  --hf-link: color-mix(in srgb, var(--hf-accent) 14%, #cfd6df);
+  --hf-hover: color-mix(in srgb, var(--hf-accent) 40%, #fff);
+  --hf-muted: color-mix(in srgb, var(--hf-accent) 22%, #77828f);
+  --hf-faint: color-mix(in srgb, var(--hf-accent) 20%, #5f6977);
+  --hf-note: color-mix(in srgb, var(--hf-accent) 20%, #6d7886);
+  --hf-pill-bg: #fff;
+  --hf-pill-hover: color-mix(in srgb, var(--hf-accent) 10%, #fff);
+  --hf-pill-text: color-mix(in srgb, var(--hf-accent) 16%, #11151b);
+
+  position: relative;
+  isolation: isolate;
+  margin-top: 8px;
+  overflow: hidden;
+  background: var(--hf-bg);
+  color: var(--hf-muted);
+}
+
+/* the picture, pushed to the right like the reference, then darkened */
+.hug-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 58%;
+  right: 0;
+  z-index: -2;
+  background: url("/Assets/frierenfooter.jpg") 50% 46% / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 34%);
+  mask-image: linear-gradient(to right, transparent 0, #000 34%);
+}
+
+.hug-footer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(to right, color-mix(in srgb, var(--hf-bg) 70%, transparent) 0%, color-mix(in srgb, var(--hf-bg) 55%, transparent) 40%, transparent 62%, transparent 100%);
+}
+
+.hug-footer_inner {
+  width: min(1400px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 32px 0 38px;
+}
+
+.hug-footer_join {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 22px;
+}
+
+.hug-footer_join .brand {
+  display: inline-flex;
+  order: 0;
+  margin: 0;
+  zoom: 0.72;
+}
+
+.hug-footer a.hug-footer_pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 16px 0 20px;
+  border-radius: 999px;
+  background: var(--hf-pill-bg);
+  color: var(--hf-pill-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.hug-footer a.hug-footer_pill:hover,
+.hug-footer a.hug-footer_pill:focus-visible {
+  color: var(--hf-pill-text);
+  background: var(--hf-pill-hover);
+  transform: translateY(-1px);
+}
+
+.hug-footer_icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: var(--hf-pill-text);
+}
+
+.hug-footer_icon--discord { width: 23px; }
+
+.hug-footer_help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.hug-footer_help-label {
+  margin-right: -10px;
+  color: var(--hf-faint);
+}
+
+.hug-footer a {
+  color: var(--hf-link);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.hug-footer a:hover,
+.hug-footer a:focus-visible {
+  color: var(--hf-hover);
+}
+
+.hug-footer a:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid color-mix(in srgb, var(--hf-accent) 60%, transparent);
+  outline-offset: 3px;
+}
+
+.hug-footer_copy {
+  margin: 18px 0 0;
+  color: var(--hf-faint);
+  font-size: 0.95rem;
+}
+
+.hug-footer_note {
+  max-width: 760px;
+  margin: 6px 0 0;
+  color: var(--hf-note);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 768px) {
+  .hug-footer {
+    text-align: center;
+  }
+
+  .hug-footer_inner {
+    width: calc(100% - 32px);
+    padding: 32px 0 36px;
+  }
+
+  /* smaller picture: the whole frame fits the footer height instead of a zoomed-in crop */
+  .hug-footer::before {
+    left: 0;
+    right: 0;
+    background-size: auto 100%;
+    background-position: 72% 50%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .hug-footer::after { background: color-mix(in srgb, var(--hf-bg) 78%, transparent); }
+
+  .hug-footer_join {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .hug-footer_help {
+    justify-content: center;
+    gap: 8px 22px;
+    margin-top: 18px;
+    font-size: 0.85rem;
+  }
+
+  .hug-footer_help-label { margin-right: -8px; }
+  .hug-footer_copy { margin-top: 18px; font-size: 0.95rem; }
+  .hug-footer_note { margin-inline: auto; font-size: 0.78rem; }
+}
+
+/* "Custom Theme" (rainbow swatch): use the palette the person built instead of the accent tint */
+:root[data-theme="custom"] .hug-footer {
+  --hf-accent: var(--ct-accent);
+  --hf-bg: var(--ct-bg);
+  --hf-link: var(--ct-text);
+  --hf-hover: var(--ct-accent-hover);
+  --hf-muted: var(--ct-muted);
+  --hf-faint: color-mix(in srgb, var(--ct-muted) 85%, transparent);
+  --hf-note: color-mix(in srgb, var(--ct-muted) 90%, transparent);
+  --hf-pill-bg: #fff;
+  --hf-pill-hover: color-mix(in srgb, var(--ct-accent) 10%, #fff);
+  --hf-pill-text: var(--ct-bg);
+}
+
+/* desktop / tablet: smaller, thinner contents (the phone layout keeps its own sizes above) */
+@media (min-width: 769px) {
+  .hug-footer_inner { padding: 26px 0 30px; }
+  .hug-footer_join { gap: 14px 16px; }
+  .hug-footer_join .brand { zoom: 0.6; }
+
+  .hug-footer a.hug-footer_pill {
+    gap: 8px;
+    min-height: 30px;
+    padding: 0 12px 0 16px;
+    font-size: 0.76rem;
+  }
+
+  .hug-footer_icon { width: 17px; height: 17px; }
+  .hug-footer_icon--discord { width: 20px; }
+
+  .hug-footer_help { margin-top: 16px; gap: 6px 20px; font-size: 0.76rem; }
+  .hug-footer_help-label { margin-right: -8px; }
+  .hug-footer_copy { margin-top: 14px; font-size: 0.84rem; }
+  .hug-footer_note { margin-top: 4px; font-size: 0.7rem; }
+}

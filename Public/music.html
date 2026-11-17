@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Anime Music | HugAnime</title>
+  <meta name="description" content="Listen to anime openings, endings and soundtracks on HugAnime.">
+  <meta name="theme-color" content="#08090c">
+  <link rel="icon" type="image/png" href="/Assets/Favicon-001.png">
+  <script>try{var t=localStorage.getItem("huganime-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="/Css/music.css">
+</head>
+<body class="mu-body">
+
+  <header class="mu-top">
+    <a class="mu-back" href="/home.html" aria-label="Back to HugAnime">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <h1 class="mu-heading">Anime Music</h1>
+    <label class="mu-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="mu-search" type="search" placeholder="Filter your list, or press Enter to search YouTube" autocomplete="off" aria-label="Search songs">
+    </label>
+  </header>
+
+  <main class="mu-main">
+    <!-- now playing -->
+    <section class="mu-stage" aria-label="Now playing">
+      <div class="mu-video" id="mu-video-box">
+        <div id="mu-player"></div>
+        <div class="mu-video-note" id="mu-video-note" hidden></div>
+      </div>
+
+      <div class="mu-now">
+        <div class="mu-now-text">
+          <p class="mu-now-title" id="mu-title">Pick a song</p>
+          <p class="mu-now-sub" id="mu-sub">Choose something from the list to start.</p>
+        </div>
+        <button class="mu-chip" id="mu-hide-video" type="button" aria-pressed="false" title="Hide the video and just listen">Audio only</button>
+      </div>
+
+      <div class="mu-seek">
+        <span id="mu-time">0:00</span>
+        <input id="mu-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+        <span id="mu-dur">0:00</span>
+      </div>
+
+      <div class="mu-controls">
+        <button class="mu-btn" id="mu-shuffle" type="button" aria-pressed="false" aria-label="Shuffle" title="Shuffle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>
+        </button>
+        <button class="mu-btn" id="mu-prev" type="button" aria-label="Previous song" title="Previous">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>
+        </button>
+        <button class="mu-btn mu-btn--play" id="mu-play" type="button" aria-label="Play" title="Play / pause">
+          <svg class="mu-ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="mu-ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+        </button>
+        <button class="mu-btn" id="mu-next" type="button" aria-label="Next song" title="Next">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>
+        </button>
+        <button class="mu-btn" id="mu-repeat" type="button" aria-pressed="false" aria-label="Repeat: off" title="Repeat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+          <span class="mu-repeat-one" aria-hidden="true">1</span>
+        </button>
+        <label class="mu-vol" title="Volume">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <input id="mu-vol" type="range" min="0" max="100" value="80" aria-label="Volume">
+        </label>
+      </div>
+    </section>
+
+    <!-- the lists -->
+    <section class="mu-list-wrap" aria-label="Songs">
+      <div class="mu-modes" role="tablist" aria-label="Where to find songs">
+        <button class="mu-mode is-active" type="button" role="tab" aria-selected="true" data-mode="library">My library</button>
+        <button class="mu-mode" type="button" role="tab" aria-selected="false" data-mode="youtube">Search YouTube</button>
+        <button class="mu-mode" type="button" role="tab" aria-selected="false" data-mode="anime">Anime songs</button>
+      </div>
+
+      <!-- 1. the starter list + songs people added -->
+      <div class="mu-panel" id="mu-panel-library">
+        <div class="mu-filters" role="tablist" aria-label="Song type">
+          <button class="mu-tab is-active" type="button" role="tab" aria-selected="true" data-type="all">All</button>
+          <button class="mu-tab" type="button" role="tab" aria-selected="false" data-type="op">Openings</button>
+          <button class="mu-tab" type="button" role="tab" aria-selected="false" data-type="ed">Endings</button>
+          <button class="mu-tab" type="button" role="tab" aria-selected="false" data-type="ost">Soundtracks</button>
+          <button class="mu-tab" type="button" role="tab" aria-selected="false" data-type="mine">My songs</button>
+        </div>
+        <ol class="mu-list" id="mu-list"></ol>
+        <p class="mu-empty" id="mu-empty" hidden>No songs match.</p>
+
+        <form class="mu-add" id="mu-add" autocomplete="off">
+          <h2>Add a song</h2>
+          <div class="mu-add-row">
+            <input id="mu-add-url" type="url" placeholder="Paste a YouTube link" aria-label="YouTube link" required>
+            <select id="mu-add-type" aria-label="Song type">
+              <option value="op">Opening</option>
+              <option value="ed">Ending</option>
+              <option value="ost">Soundtrack</option>
+            </select>
+            <button type="submit">Add</button>
+          </div>
+          <p class="mu-add-note" id="mu-add-note" role="status"></p>
+        </form>
+      </div>
+
+      <!-- 2. search any song on YouTube -->
+      <div class="mu-panel" id="mu-panel-youtube" hidden>
+        <form class="mu-find" id="mu-yt-form" autocomplete="off">
+          <input id="mu-yt-q" type="search" placeholder="Song, artist or anime, e.g. Gurenge LiSA" aria-label="Search YouTube" required>
+          <button type="submit">Search</button>
+        </form>
+        <p class="mu-status" id="mu-yt-status" role="status">Type a song and press Search.</p>
+        <ol class="mu-list" id="mu-yt-list"></ol>
+      </div>
+
+      <!-- 3. the openings and endings of an anime (from MyAnimeList), played from YouTube -->
+      <div class="mu-panel" id="mu-panel-anime" hidden>
+        <form class="mu-find" id="mu-an-form" autocomplete="off">
+          <input id="mu-an-q" type="search" placeholder="Find an anime, e.g. Chainsaw Man" aria-label="Find an anime" required>
+          <button type="submit">Find</button>
+        </form>
+        <div class="mu-anime-picks" id="mu-an-picks"></div>
+        <p class="mu-status" id="mu-an-status" role="status">Pick an anime to see its openings and endings.</p>
+        <ol class="mu-list" id="mu-an-list"></ol>
+      </div>
+    </section>
+  </main>
+
+  <div class="mu-toast" id="mu-toast" role="status" aria-live="polite"></div>
+
+  <script src="/Js/music-data.js"></script>
+  <script src="/Js/music.js"></script>
+  <script src="https://www.youtube.com/iframe_api" async></script>
+</body>
+</html>

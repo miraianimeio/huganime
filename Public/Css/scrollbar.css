@@ -43,3 +43,10 @@ html::-webkit-scrollbar-thumb:active {
 html::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Phones: no blue flash / box when tapping links, cards and buttons.
+   (this file is loaded on every page, so the rule lives here; the property is inherited, `*` also covers elements that set their own) */
+html,
+* {
+  -webkit-tap-highlight-color: transparent;
+}

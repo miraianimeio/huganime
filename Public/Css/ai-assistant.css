@@ -69,6 +69,12 @@
     inset 0 0 22px rgb(255 255 255 / 12%),
     0 10px 30px rgb(0 0 0 / 45%),
     0 0 34px rgb(var(--ai-accent-rgb) / 38%);
+}
+/* the "breathing" only runs while the orb is hovered, focused or speaking: it redraws big glowing shadows every
+   frame, which kept the whole page busy even when nobody touched it */
+.ha-ai__orb:hover .ha-ai__orb-body,
+.ha-ai__orb:focus-visible .ha-ai__orb-body,
+.ha-ai-root.is-speaking .ha-ai__orb-body {
   will-change: transform;
   animation: ha-ai-breathe 4.2s ease-in-out infinite;
 }

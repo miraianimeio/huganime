@@ -54,8 +54,6 @@
     airing: { ...currentSeason(), sort: ["POPULARITY_DESC"] },
     action: genre("Action"),
     romance: genre("Romance"),
-    isekai: { tag: "Isekai", sort: ["SCORE_DESC"], minScore: 70, minPopularity: 10000 },
-    fantasy: genre("Fantasy"),
   };
 
   // ---------- small helpers ----------
@@ -107,7 +105,7 @@
       title: window.HugTitle.pick(a.title),
       titles: { english: a.title?.english || "", romaji: a.title?.romaji || "" }, // cached too, so EN / JP can switch later
       url: a.siteUrl,
-      image: a.coverImage?.extraLarge || a.coverImage?.large || "",
+      image: a.coverImage?.large || a.coverImage?.extraLarge || "",
       score: a.averageScore ? a.averageScore / 10 : null, // 0-100 -> 0-10
       type: FORMATS[a.format] || "",
       duration: shortDuration(a.duration),

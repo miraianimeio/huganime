@@ -41,3 +41,10 @@ and the playback time that the MegaPlay player reports to the page (`Public/Js/a
 - On a live host, run `npm start` there as well; the page finds `/server-check` on its own address.
 - Some embed sites want a referrer when checked: `REFERER=https://your-site npm start`.
 - Opened through another static server (e.g. Live Server) there is no `/server-check`, so only Vidplay and BYFMS can be checked.
+
+## Dub badges on the home cards
+
+Each home card shows a mic + the number of episodes that have an English dub (nothing is shown when there is no dub).
+The count comes from the Anikoto episode list (the same data the watch page uses) through `POST /dub-counts` (`dubcount.js`).
+Anikoto is rate limited, so lookups go through one slow queue and are cached on disk in `data/.dub-counts.json`
+(`DUB_CACHE_HOURS`, default 6; `DUB_QUEUE_GAP_MS`, default 3000). The first visit fills in badges a few at a time.

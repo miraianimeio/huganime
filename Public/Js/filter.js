@@ -94,6 +94,7 @@ const QUERY = `
             season: $season, seasonYear: $year, format: $format, status: $status,
             averageScore_greater: $minScore, popularity_greater: $minPop, sort: $sort) {
         id
+        idMal
         title { romaji english }
         coverImage { large medium }
         format
@@ -207,6 +208,9 @@ function animeCard(m) {
   item.dataset.animeCover = cover;
   item.dataset.animeFormat = type;
   item.dataset.animeEpisodes = episodes || "";
+  // read by dub-badges.js (it adds the dub mic badge when the anime has a dub)
+  item.dataset.animeMal = m.idMal || "";
+  item.dataset.animeTitles = JSON.stringify([m.title?.english, m.title?.romaji].filter(Boolean));
 
   // no href: the card opens the details modal, and a real AniList link makes the browser show its URL bar on hover
   const link = el("a", "anime-card_link");

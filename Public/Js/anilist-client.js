@@ -29,6 +29,8 @@ const QUERY = `
       tags { name isMediaSpoiler }
       studios { edges { isMain node { name isAnimationStudio } } }
       nextAiringEpisode { episode airingAt }
+      streamingEpisodes { title thumbnail }
+      airingSchedule(perPage: 100) { nodes { episode airingAt } }
       trailer { id site }
       relations { edges { relationType(version: 2) node { id type format seasonYear startDate { year } averageScore title { romaji english } coverImage { large medium } } } }
       recommendations(perPage: 8, sort: RATING_DESC) { nodes { mediaRecommendation { id type format seasonYear startDate { year } averageScore title { romaji english } coverImage { large medium } } } }
@@ -124,6 +126,8 @@ function normalize(m) {
     studios: (main.length ? main : studios.filter((e) => e.isMain)).map((e) => e.node.name),
     score: m.averageScore ? m.averageScore / 10 : null,
     scores: { anilist: m.averageScore ? (m.averageScore / 10).toFixed(1) : null, mal: null },
+    streamingEpisodes: (m.streamingEpisodes || []).map((e) => ({ title: e.title || "", thumbnail: e.thumbnail || "" })),
+    airingSchedule: (m.airingSchedule?.nodes || []).map((e) => ({ episode: e.episode, airingAt: e.airingAt })),
     nextAiring: next ? { episode: next.episode, airingAt: next.airingAt } : null,
     trailer: m.trailer || null,
     characters: [],

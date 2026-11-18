@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { probeAll } from "./Public/Js/server-check.js";
 import { resolveEpisode, debugInfo, startCatalog } from "./anikoto.js";
 import { getSkipTimes } from "./aniskip.js";
+import { dubCounts, dubQueueInfo } from "./dubcount.js";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 3000;
@@ -111,6 +112,19 @@ async function skipTimes(url, res) {
   sendJson(res, 200, await getSkipTimes({ malId, episode }));
 }
 
+// Home cards ask which anime have a dub and how many dubbed episodes there are: POST /dub-counts  { items: [{ id, malId, titles }] }
+// -> { counts: { "<anilist id>": { state: "ready" | "pending" | "none", dub: number | null } } }   (see dubcount.js)
+async function dubCountsRoute(req, res) {
+  let body = "";
+  for await (const chunk of req) {
+    body += chunk;
+    if (body.length > 20000) return sendJson(res, 413, { error: "request too large" });
+  }
+  let items;
+  try { items = JSON.parse(body || "{}").items; } catch { return sendJson(res, 400, { error: "invalid JSON" }); }
+  return sendJson(res, 200, { counts: await dubCounts(items), queue: dubQueueInfo() });
+}
+
 async function serveFile(pathname, req, res) {
   let relative;
   try {
@@ -202,6 +216,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/s2-episode") return await s2Episode(url, res, false);
     if (url.pathname === "/s2-debug") return await s2Episode(url, res, true);
     if (url.pathname === "/skip-times") return await skipTimes(url, res);
+    if (url.pathname === "/dub-counts" && req.method === "POST") return await dubCountsRoute(req, res);
     if (url.pathname === "/") {
       res.writeHead(302, { Location: "/home" });
       return res.end();

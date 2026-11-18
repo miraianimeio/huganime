@@ -77,7 +77,7 @@ async function catalogRequest(path, options = {}) {
 }
 
  
-const CACHE_VERSION = "mirai_v5_browser_anilist_";
+const CACHE_VERSION = "mirai_v6_browser_anilist_";
 
 function isNonEmptyData(data) {
   if (!data) return false;
@@ -140,7 +140,7 @@ export const catalog = {
     if (animeDetailsCache.has(numericId)) {
       return animeDetailsCache.get(numericId);
     }
-    const sessionKey = `anime_details_browser_anilist_${numericId}`;
+    const sessionKey = `anime_details_browser_anilist_v2_${numericId}`;
     const cached = session.get(sessionKey) || persistentCache.get(sessionKey);
     if (cached?.data) {
       animeDetailsCache.set(numericId, cached.data);

@@ -185,6 +185,55 @@ function s2DebugUrl() {
   return `/s2-debug?${query}`;
 }
 
+// The episode's own picture (Kitsu, ani.zip or AniList) behind the play button, until the video starts.
+function episodeThumb(n) {
+  return safeUrl(state.episodeDetails.get(n)?.thumb) || safeUrl(anilistEpisodes().get(n)?.thumb) || "";
+}
+
+function paintPoster() {
+  if (!els.stage) return;
+  const picture = episodeThumb(state.currentEpisode) || safeUrl(state.anime?.banner) || "";
+  els.stage.classList.toggle("player_stage--poster", !!picture && !state.playing);   // behind the play button
+  if (picture) els.stage.style.setProperty("--poster", `url("${picture.replace(/"/g, "%22")}")`);  // also behind the loader
+  else els.stage.style.removeProperty("--poster");
+}
+
+// Our own loading screen: the episode picture with a spinner, shown from the click until the player page has loaded.
+const LOADING_ART = "/Assets/frieren-loading.gif";
+let loadingEl = null;
+let loadingTimer = 0;
+function setLoading(on) {
+  clearTimeout(loadingTimer);
+  if (!els.stage) return;
+  if (on) {
+    if (!loadingEl) {
+      loadingEl = el("div", "player_loading");
+      loadingEl.setAttribute("role", "status");
+      loadingEl.setAttribute("aria-label", "Loading the player");
+      const spinner = el("span", "player_spinner");
+      loadingEl.append(spinner);
+      // Put the animation at Assets/frieren-loading.gif; until that file exists the spinner above is shown instead.
+      const art = el("img", "player_loading_art");
+      art.alt = "";
+      art.decoding = "async";
+      art.hidden = true;
+      art.addEventListener("load", () => { art.hidden = false; spinner.hidden = true; });
+      art.addEventListener("error", () => art.remove());
+      art.src = LOADING_ART;
+      loadingEl.append(art);
+    }
+    els.stage.append(loadingEl);                      // always on top of the player frame
+    loadingTimer = setTimeout(() => setLoading(false), 20000);   // never get stuck on a player that never reports in
+  } else {
+    loadingEl?.remove();
+  }
+}
+
+function refreshEpisodeCards() {
+  els.grid.replaceChildren(...[...els.grid.children].map((node) => episodeButton(Number(node.dataset.ep))));
+  paintPoster();
+}
+
 function teardownPlayer() {
   playbackRun++; // a start that is still waiting for its episode id must not appear afterwards
   autoSkipper.stop();
@@ -192,7 +241,9 @@ function teardownPlayer() {
   currentFrame = null;
   state.playing = false;
   els.play.hidden = false;
+  setLoading(false);
   showNote("");
+  paintPoster();
 }
 
 let playbackRun = 0;
@@ -237,6 +288,7 @@ async function startPlayback() {
     autoplay: 1
   };
 
+  setLoading(true);
   let lookupNote = "";
   let lookupHref = "";
   if (LOOKUP_SERVERS.has(ctx.server)) {
@@ -268,6 +320,7 @@ async function startPlayback() {
       : "No video source is available for this episode yet.";
   }
   if (!src) {
+    setLoading(false);
     showNote(note, lookupHref);
     return;
   }
@@ -285,11 +338,14 @@ async function startPlayback() {
   frame.referrerPolicy = "origin";
   frame.allow = "autoplay *; encrypted-media *; fullscreen *; picture-in-picture *";
   frame.allowFullscreen = true;
+  frame.addEventListener("load", () => { if (currentFrame === frame) setLoading(false); });
   els.stage.appendChild(frame);
+  setLoading(true);                                   // re-adds the loader above the new frame
   currentFrame = frame;
 
   els.play.hidden = true;
   state.playing = true;
+  paintPoster();
   showNote(note, note === lookupNote ? lookupHref : "");
   if (playingTrailer) autoSkipper.stop(); else armAutoSkip(ctx.server);
   recordProgress();
@@ -617,14 +673,54 @@ function renderRangeOptions() {
   els.range.value = String(state.rangeStart);
 }
 
+// ---- AniList fallback for episode title / picture / air date (used only where Kitsu and Jikan have nothing).
+// AniList has no per-episode descriptions. Its streamingEpisodes look like "Episode 5 - Title" (some sites number a
+// new season on from the last one, e.g. "Episode 25" for episode 1), so the numbers are shifted back to start at 1.
+let anilistEpisodeCache = null;   // { source: state.anime, map: Map<episode, { title, thumb, aired }> }
+function anilistEpisodes() {
+  const a = state.anime;
+  if (!a || mergedParts()) return new Map();       // a merged season mixes several entries: AniList data would be mismatched
+  if (anilistEpisodeCache?.source === a) return anilistEpisodeCache.map;
+
+  const streams = [];
+  for (const s of a.streamingEpisodes || []) {
+    const m = /^\s*(?:episode|ep\.?)\s*(\d+)\s*[-:–—.]?\s*(.*)$/i.exec(s.title || "");
+    if (m) streams.push({ n: Number(m[1]), title: m[2].trim(), thumb: s.thumbnail || "" });
+  }
+  const schedule = (a.airingSchedule || []).filter((e) => e.episode && e.airingAt);
+
+  // continued numbering: the lowest number is far above 1 (or the numbers run past the season's episode count)
+  const total = a.episodes || state.totalEpisodes || 0;
+  const lowest = streams.length ? Math.min(...streams.map((s) => s.n)) : 1;
+  const highest = streams.length ? Math.max(...streams.map((s) => s.n)) : 0;
+  const shift = lowest > 1 && (!total || highest > total || lowest - 1 + streams.length === highest) ? lowest - 1 : 0;
+
+  const map = new Map();
+  for (const s of streams) {
+    const n = s.n - shift;
+    if (n < 1) continue;
+    map.set(n, { title: s.title && !/^episode\s*\d+$/i.test(s.title) ? s.title : "", thumb: s.thumb, aired: "" });
+  }
+  for (const e of schedule) {
+    const entry = map.get(e.episode) || { title: "", thumb: "", aired: "" };
+    entry.aired = new Date(e.airingAt * 1000).toISOString();
+    map.set(e.episode, entry);
+  }
+  anilistEpisodeCache = { source: a, map };
+  return map;
+}
+
 function formatAired(value) {
   const date = new Date(/^\d{4}-\d{2}-\d{2}$/.test(value || "") ? `${value}T00:00:00` : value);
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 }
 
 function episodeButton(n) {
-  const detail = state.episodeDetails.get(n) || {};
-  const title = detail.title || state.episodeTitles.get(n);
+  const kitsu = state.episodeDetails.get(n) || {};
+  const fallback = anilistEpisodes().get(n) || {};
+  // Kitsu first, then Jikan's title, then AniList
+  const detail = { ...kitsu, thumb: kitsu.thumb || fallback.thumb || "", aired: kitsu.aired || fallback.aired || "" };
+  const title = kitsu.title || state.episodeTitles.get(n) || fallback.title;
   const btn = el("button", "ep");
   btn.type = "button";
   btn.dataset.ep = String(n);
@@ -684,6 +780,7 @@ function renderEpisodes() {
 
 function syncEpisodeUI() {
   const n = state.currentEpisode;
+  paintPoster();
   els.watching.textContent = `Episode ${n}`;
   els.prev.disabled = n <= 1;
   els.next.disabled = !!state.totalEpisodes && n >= state.totalEpisodes;
@@ -729,44 +826,56 @@ function applyTitles(entries, offset = 0) {
 // ---- episode pictures, titles and descriptions (Kitsu: free, no key). MAL id -> Kitsu anime -> its episodes, 20 per page.
 // Only the pages for the episodes on screen are fetched; every page is fetched once.
 const KITSU = "https://kitsu.io/api/edge";
-const kitsuIds = new Map();          // malId -> Promise<kitsu id>
+const kitsuIds = new Map();          // "anilistId:malId" -> Promise<kitsu id>
 const kitsuPagesDone = new Set();    // "<kitsuId>:<page>"
 
-function kitsuId(malId) {
-  if (kitsuIds.has(malId)) return kitsuIds.get(malId);
-  const cacheKey = `kitsu_id_${malId}`;
+// Kitsu usually knows a brand-new season by its AniList id long before it has the MyAnimeList link, so ask by
+// AniList id first and fall back to the MyAnimeList id. part = { animeId (AniList), malId }
+async function kitsuLookup(site, externalId, cacheKey) {
   const cached = persistentCache.get(cacheKey);
-  const promise = cached?.data
-    ? Promise.resolve(String(cached.data))
-    : fetch(`${KITSU}/mappings?filter[externalSite]=myanimelist/anime&filter[externalId]=${encodeURIComponent(malId)}&include=item`, { headers: { Accept: "application/vnd.api+json" } })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((json) => {
-          const id = json?.included?.[0]?.id || json?.data?.[0]?.relationships?.item?.data?.id || "";
-          if (id) persistentCache.set(cacheKey, String(id));
-          else kitsuIds.delete(malId);                   // no answer: ask again next time
-          return String(id || "");
-        })
-        .catch(() => { kitsuIds.delete(malId); return ""; });
-  kitsuIds.set(malId, promise);
+  if (cached?.data) return String(cached.data);
+  try {
+    const res = await fetch(`${KITSU}/mappings?filter[externalSite]=${site}&filter[externalId]=${encodeURIComponent(externalId)}&include=item`, { headers: { Accept: "application/vnd.api+json" } });
+    const json = res.ok ? await res.json() : null;
+    const id = json?.included?.[0]?.id || json?.data?.[0]?.relationships?.item?.data?.id || "";
+    if (id) persistentCache.set(cacheKey, String(id));
+    return String(id || "");
+  } catch {
+    return "";
+  }
+}
+
+function kitsuId(part) {
+  const key = `${part.animeId || 0}:${part.malId || 0}`;
+  if (kitsuIds.has(key)) return kitsuIds.get(key);
+  const promise = (async () => {
+    let id = "";
+    if (part.animeId) id = await kitsuLookup("anilist/anime", part.animeId, `kitsu_id_al_${part.animeId}`);
+    if (!id && part.malId) id = await kitsuLookup("myanimelist/anime", part.malId, `kitsu_id_${part.malId}`);
+    if (!id) kitsuIds.delete(key);                   // no answer: ask again next time
+    return id;
+  })();
+  kitsuIds.set(key, promise);
   return promise;
 }
 
 // numbers = episode numbers on this page; a merged season is split into its parts, each asked about with its own MAL id
 async function loadEpisodeDetails(numbers) {
-  if (!state.malId || !numbers.length) return;
+  if ((!state.animeId && !state.malId) || !numbers.length) return;
   const groups = new Map();
   for (const n of numbers) {
     const part = partFor(n);
-    if (!part.malId) continue;
-    if (!groups.has(part.malId)) groups.set(part.malId, { part, locals: [] });
-    groups.get(part.malId).locals.push(part.episode);
+    if (!part.animeId && !part.malId) continue;
+    const groupKey = `${part.animeId || 0}:${part.malId || 0}`;
+    if (!groups.has(groupKey)) groups.set(groupKey, { part, locals: [] });
+    groups.get(groupKey).locals.push(part.episode);
   }
-  for (const { part, locals } of groups.values()) await loadPartDetails(part, locals);
+  for (const { part, locals } of groups.values()) await Promise.all([loadPartDetails(part, locals), loadAnizipDetails(part)]);
 }
 
 async function loadPartDetails(part, locals) {
   const animeId = state.animeId;
-  const id = await kitsuId(part.malId);
+  const id = await kitsuId(part);
   if (!id || animeId !== state.animeId) return;
 
   const first = Math.floor((Math.min(...locals) - 1) / 20);
@@ -786,7 +895,7 @@ async function loadPartDetails(part, locals) {
         if (!n) continue;
         const thumb = a.thumbnail?.large || a.thumbnail?.original || a.thumbnail?.medium || "";
         const synopsis = String(a.synopsis || "").replace(/\s*\(Source:[^)]*\)\s*$/i, "").replace(/\s+/g, " ").trim();
-        state.episodeDetails.set(n + part.offset, { title: a.titles?.en_us || a.titles?.en_jp || a.canonicalTitle || "", synopsis, thumb, aired: a.airdate || "" });
+        mergeEpisodeDetail(n + part.offset, { title: a.titles?.en_us || a.titles?.en_jp || a.canonicalTitle || "", synopsis, thumb, aired: a.airdate || "" });
         changed = true;
       }
     } catch (error) {
@@ -797,8 +906,69 @@ async function loadPartDetails(part, locals) {
   }
   if (changed && animeId === state.animeId) {
     // refresh the cards without restarting the loader
-    els.grid.replaceChildren(...[...els.grid.children].map((node) => episodeButton(Number(node.dataset.ep))));
+    refreshEpisodeCards();
   }
+}
+
+// Fill in only the fields that are still empty, so Kitsu and ani.zip can each add what the other doesn't have.
+function mergeEpisodeDetail(n, d) {
+  const cur = state.episodeDetails.get(n) || {};
+  state.episodeDetails.set(n, {
+    title: cur.title || d.title || "",
+    synopsis: cur.synopsis || d.synopsis || "",
+    thumb: cur.thumb || d.thumb || "",
+    aired: cur.aired || d.aired || ""
+  });
+}
+
+// ---- ani.zip (free, no key): TheTVDB's episode titles, descriptions, screenshots and air dates, looked up by AniList id.
+// This is where Kitsu is empty (a brand-new season). Episode keys are numbered inside the season (1, 2, 3 ...).
+const ANIZIP = "https://api.ani.zip/mappings";
+const anizipLoads = new Map();      // AniList id -> Promise<true when it added something>
+
+function loadAnizipDetails(part) {
+  const animeId = state.animeId;
+  if (!part.animeId) return Promise.resolve();
+  if (!anizipLoads.has(part.animeId)) {
+    anizipLoads.set(part.animeId, (async () => {
+      const key = `anizip_${part.animeId}`;
+      let episodes = null;
+      const cached = persistentCache.get(key);
+      if (cached?.data && Date.now() - cached.savedAt < 3 * 3600 * 1000) episodes = cached.data;
+      if (!episodes) {
+        try {
+          const res = await fetch(`${ANIZIP}?anilist_id=${encodeURIComponent(part.animeId)}`, { headers: { Accept: "application/json" } });
+          if (!res.ok) throw new Error("ani.zip HTTP " + res.status);
+          const json = await res.json();
+          episodes = {};
+          for (const [k, e] of Object.entries(json.episodes || {})) {
+            if (!/^\d+$/.test(k)) continue;               // "S1", "S2" ... are specials
+            episodes[k] = {
+              title: e.title?.en || e.title?.["x-jat"] || "",
+              synopsis: String(e.overview || e.summary || "").replace(/\s+/g, " ").trim(),
+              thumb: e.image || "",
+              aired: e.airDateUtc || e.airDate || e.airdate || ""
+            };
+          }
+          persistentCache.set(key, episodes);
+        } catch (error) {
+          anizipLoads.delete(part.animeId);                // try again next time
+          console.warn("Could not load ani.zip episode details:", error);
+          return false;
+        }
+      }
+      let changed = false;
+      for (const [k, d] of Object.entries(episodes)) {
+        if (d.title || d.synopsis || d.thumb || d.aired) { mergeEpisodeDetail(Number(k) + part.offset, d); changed = true; }
+      }
+      return changed;
+    })());
+  }
+  return anizipLoads.get(part.animeId).then((changed) => {
+    if (changed && animeId === state.animeId) {
+      refreshEpisodeCards();
+    }
+  });
 }
 
 async function loadEpisodeTitles(malId, offset = 0) {   // offset = episodes of the earlier parts of a merged season
@@ -1168,6 +1338,7 @@ function onAnime(anime) {
   renderSeries();
   renderRangeOptions();
   renderEpisodes();
+  paintPoster();
   paintListButton();
   renderAiring();
 

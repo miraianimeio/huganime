@@ -44,16 +44,15 @@
     { id: "light", name: "Light", bg: "#f4f4f5", card: "#ffffff", accent: "#7c3aed", text: "#18181b" },
   ];
 
-  const gf = (family) => `https://fonts.googleapis.com/css2?family=${family}&display=swap`;
+  // Only fonts that are already installed on the visitor's device: nothing is downloaded from any font service
   const FONTS = [
-    { id: "default", name: "Default", stack: "", url: "" },
-    { id: "system", name: "System UI", stack: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif', url: "" },
-    { id: "dmsans", name: "DM Sans", stack: '"DM Sans", system-ui, sans-serif', url: gf("DM+Sans:wght@400;500;700;800") },
-    { id: "poppins", name: "Poppins", stack: 'Poppins, system-ui, sans-serif', url: gf("Poppins:wght@400;500;600;700") },
-    { id: "nunito", name: "Nunito", stack: 'Nunito, system-ui, sans-serif', url: gf("Nunito:wght@400;600;700;800") },
-    { id: "space", name: "Space Grotesk", stack: '"Space Grotesk", system-ui, sans-serif', url: gf("Space+Grotesk:wght@400;500;700") },
-    { id: "lora", name: "Lora (serif)", stack: 'Lora, Georgia, serif', url: gf("Lora:wght@400;600;700") },
-    { id: "mono", name: "JetBrains Mono", stack: '"JetBrains Mono", ui-monospace, Consolas, monospace', url: gf("JetBrains+Mono:wght@400;600;700") },
+    { id: "default", name: "Default", stack: "" },
+    { id: "system", name: "System UI", stack: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif' },
+    { id: "helvetica", name: "Helvetica / Arial", stack: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+    { id: "trebuchet", name: "Trebuchet", stack: '"Trebuchet MS", "Segoe UI", sans-serif' },
+    { id: "verdana", name: "Verdana", stack: 'Verdana, Geneva, sans-serif' },
+    { id: "georgia", name: "Georgia (serif)", stack: 'Georgia, "Times New Roman", serif' },
+    { id: "mono", name: "Monospace", stack: 'ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace' },
   ];
 
   const MAIN_ROWS = [
@@ -131,22 +130,13 @@
     if (f.stack) attrs["data-ct-font"] = "1";
     if (d.adv.trend) attrs["data-ct-panel"] = "1";
     if (p.light) attrs["data-ct-light"] = "1";
-    return { vars, attrs, fontUrl: f.url };
+    return { vars, attrs };
   }
 
   /* ---------- applying + saving ---------- */
   function clearInline() {
     VAR_KEYS.forEach((k) => root.style.removeProperty(k));
     ATTR_KEYS.forEach((k) => root.removeAttribute(k));
-    const link = document.getElementById("ct-font");
-    if (link) link.remove();
-  }
-
-  function ensureFont(url) {
-    let link = document.getElementById("ct-font");
-    if (!url) { if (link) link.remove(); return; }
-    if (!link) { link = document.createElement("link"); link.id = "ct-font"; link.rel = "stylesheet"; document.head.appendChild(link); }
-    if (link.href !== url) link.href = url;
   }
 
   function setSiteTheme(name) {
@@ -160,7 +150,6 @@
     clearInline();
     Object.entries(out.vars).forEach(([k, v]) => root.style.setProperty(k, v));
     Object.entries(out.attrs).forEach(([k, v]) => root.setAttribute(k, v));
-    ensureFont(out.fontUrl);
     try { localStorage.setItem(STORE, JSON.stringify({ draft, ...out })); } catch { /* storage blocked */ }
     if (root.dataset.theme !== "custom") setSiteTheme("custom");
     active = true;

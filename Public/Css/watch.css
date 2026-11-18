@@ -133,6 +133,52 @@ a {
   background: #000;
 }
 
+/* the episode's picture shows behind the play button until the video starts */
+.player_stage--poster {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.35)),
+    var(--poster) center / cover no-repeat,
+    #000;
+}
+
+.player_loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background-color: #000;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.55)), var(--poster, none);
+  background-position: center;
+  background-size: cover;
+}
+
+.player_spinner {
+  width: clamp(36px, 7vw, 56px);
+  aspect-ratio: 1;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--accent, #fff);
+  border-radius: 50%;
+  animation: player-spin 0.8s linear infinite;
+}
+
+.player_spinner[hidden],
+.player_loading_art[hidden] {
+  display: none;
+}
+
+.player_loading_art {
+  width: min(34%, 220px);
+  height: auto;
+  max-height: 70%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.55));   /* the GIF is transparent: the shadow follows her outline */
+}
+
+@keyframes player-spin {
+  to { transform: rotate(360deg); }
+}
+
 .player_stage iframe {
   border-radius: 0;
   position: absolute;
@@ -173,6 +219,7 @@ a {
 
 .player_note {
   position: absolute;
+  z-index: 4;                                       /* stays readable above the loading screen */
   right: 12px;
   bottom: 12px;
   left: 12px;

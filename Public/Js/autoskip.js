@@ -105,8 +105,7 @@ export function createAutoSkipper({ sendSeek, goNext, hasNext, notify = () => {}
       if (s.pending) {
         const p = s.pending;
         if (time >= p.target - 2 && time <= p.target + 90) {
-          s.pending = null;
-          notify(`${p.label} skipped`);
+          s.pending = null;                                    // the jump worked: no message, so nothing covers the video
         } else if (now() - p.sentAt >= VERIFY_MS) {
           if (p.attempts < MAX_ATTEMPTS) {
             p.attempts++;

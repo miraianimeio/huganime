@@ -108,7 +108,28 @@ a[role="button"] {
 }
 
 .pill--dub {
-  background: #b91c1c;
+  gap: 4px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: clamp(0.7rem, 2.6vw, 0.78rem);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 85%), 0 0 6px rgb(0 0 0 / 55%);
+  margin-left: 8px;                                  /* a bit further right, away from the CC badge */
+  color: #fff;
+}
+
+/* 9 or fewer dubbed episodes: the mic sits a little further right (10 and more stay where they are) */
+.pill--dub-few {
+  margin-left: 18px;
+}
+
+/* dub badge: same look as the CC badge, but the mic is always white (not tinted by the theme colour) */
+.pill--dub svg {
+  width: 1.3em;
+  height: 1.3em;
+  color: #fff;
+  fill: #fff;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 85%)) drop-shadow(0 0 3px rgb(0 0 0 / 50%));
 }
 
 .anime-card_title {
@@ -227,6 +248,14 @@ a[role="button"] {
   .pill--sub svg {
     width: 1.5em;
     height: 1.5em;
+  }
+
+  .pill--dub {
+    margin-left: 5px;
+  }
+
+  .pill--dub-few {
+    margin-left: 12px;
   }
 
   .anime-card_title {

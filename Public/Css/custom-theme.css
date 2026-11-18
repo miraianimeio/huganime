@@ -231,37 +231,23 @@
 :root[data-theme="custom"] .site-footer_top-btn:hover { color: var(--ct-accent-hover); background: color-mix(in srgb, var(--ct-accent) 18%, transparent); }
 
 /* ----- Estimated Schedule block (home page) ----- */
-:root[data-theme="custom"] .hs { background: var(--ct-card); border-color: var(--ct-border); }
-:root[data-theme="custom"] .hs_head {
-  background:
-    radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--ct-accent) 10%, transparent), transparent 55%),
-    linear-gradient(180deg, var(--ct-hover), var(--ct-card));
-}
 :root[data-theme="custom"] .hs_title,
 :root[data-theme="custom"] .hs_name { color: var(--ct-text); }
 :root[data-theme="custom"] .hs_now,
 :root[data-theme="custom"] .hs_arrow,
 :root[data-theme="custom"] .hs_message { color: var(--ct-muted); }
 :root[data-theme="custom"] .hs_arrow:hover,
-:root[data-theme="custom"] .hs_arrow:focus-visible { color: var(--ct-text); background: var(--ct-hover); }
-:root[data-theme="custom"] .hs_day { color: color-mix(in srgb, var(--ct-muted) 60%, var(--ct-card)); }
+:root[data-theme="custom"] .hs_arrow:focus-visible { color: var(--ct-text); background: color-mix(in srgb, var(--ct-text) 8%, transparent); }
+:root[data-theme="custom"] .hs_day { color: color-mix(in srgb, var(--ct-muted) 60%, var(--ct-bg)); }
 :root[data-theme="custom"] .hs_day:hover,
 :root[data-theme="custom"] .hs_day:focus-visible { color: var(--ct-muted); }
 :root[data-theme="custom"] .hs_day.is-active { color: var(--ct-accent); }
 :root[data-theme="custom"] .hs_day.is-active .hs_day-name { color: var(--ct-text); }
 :root[data-theme="custom"] .hs_day.is-active::after { background: var(--ct-accent); }
 :root[data-theme="custom"] .hs_time { color: var(--ct-accent); }
-:root[data-theme="custom"] .hs_item:hover { background: var(--ct-hover); }
-:root[data-theme="custom"] .hs_item + .hs_item { box-shadow: 0 -1px 0 var(--ct-border); }
-:root[data-theme="custom"] .hs_item:hover { box-shadow: none; }
-:root[data-theme="custom"] .hs_ep { color: var(--ct-muted); background: var(--ct-hover); }
 :root[data-theme="custom"] .hs_item:hover .hs_ep,
 :root[data-theme="custom"] .hs_item:focus-visible .hs_ep { color: var(--ct-on-accent); background: var(--ct-accent); }
 :root[data-theme="custom"] .hs_retry { color: var(--ct-on-accent); background: var(--ct-accent); }
-:root[data-theme="custom"] .hs_skel {
-  background: linear-gradient(100deg, var(--ct-card) 30%, var(--ct-hover) 50%, var(--ct-card) 70%);
-  background-size: 200% 100%;
-}
 
 /* ----- anime details popup ----- */
 :root[data-theme="custom"] .anime-modal-card { background: var(--ct-bg); border-color: var(--ct-border); color: var(--ct-text); }
@@ -366,7 +352,6 @@
 :root[data-theme="custom"][data-ct-glass] .site-header { background: color-mix(in srgb, var(--ct-nav) 60%, transparent); }
 :root[data-theme="custom"][data-ct-glass] .nav-drawer { background: color-mix(in srgb, var(--ct-nav) 72%, transparent); }
 :root[data-theme="custom"][data-ct-glass] .search-panel-inner { background: color-mix(in srgb, var(--ct-nav) 78%, transparent); }
-:root[data-theme="custom"][data-ct-glass] .hs { background: color-mix(in srgb, var(--ct-card) 55%, transparent); }
 :root[data-theme="custom"][data-ct-glass] .anime-modal-card { background: color-mix(in srgb, var(--ct-bg) 80%, transparent); }
 
 

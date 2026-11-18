@@ -360,3 +360,8 @@ export async function debugInfo({ animeId, malId, titles, episode }) {
     howToFix: "If the anime is missing or mismatched, add  \"<anilistId>\": <anikotoSeriesId>  to data/s2-series.json (the series id is the number in  " + API + "/series/<id>)."
   };
 }
+
+/** Is the Anikoto list fully downloaded? (a title that is missing from a finished list is simply not there) */
+export function catalogStatus() {
+  return { complete: catalog.complete, crawling: catalog.crawling, series: catalog.series, lastError: catalog.lastError };
+}

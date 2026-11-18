@@ -25,6 +25,7 @@
           averageScore_greater: $minScore, popularity_greater: $minPopularity
         ) {
           id
+          idMal
           siteUrl
           title { romaji english }
           coverImage { extraLarge large }
@@ -102,6 +103,7 @@
   function toCard(a) {
     return {
       id: a.id,
+      malId: a.idMal || 0,                                // helps dub-badges.js match the anime in the Anikoto list
       title: window.HugTitle.pick(a.title),
       titles: { english: a.title?.english || "", romaji: a.title?.romaji || "" }, // cached too, so EN / JP can switch later
       url: a.siteUrl,
@@ -218,6 +220,9 @@
     item.dataset.animeCover = c.image;
     item.dataset.animeFormat = c.type;
     item.dataset.animeEpisodes = c.episodes || "";
+    // read by dub-badges.js (it adds the dub mic badge when the anime has a dub)
+    item.dataset.animeMal = c.malId || "";
+    item.dataset.animeTitles = JSON.stringify([c.titles?.english, c.titles?.romaji].filter(Boolean));
 
     // no href: the card opens the details modal, and a real AniList link makes the browser show its URL bar on hover
     const link = el("a", "anime-card_link");
